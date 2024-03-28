@@ -1,0 +1,12 @@
+
+numpy
+scipy
+pandas
+matplotlib
+seaborn
+jupyterlab
+jupyterlab-vim
+cmake>=3.19
+
+# Nest
+-r nest-simulator/requirements.txt
