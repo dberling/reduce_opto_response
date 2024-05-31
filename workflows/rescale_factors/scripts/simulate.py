@@ -101,11 +101,12 @@ for intensity in intensities:
             tmp['rescaled_cond_nS'] = tmp['cond_nS'] / (1 + tmp['ir-ir_soma'] * tmp['cond_nS'])
             # normalize rescaled conductance by total conductance over comps per time step
             tmp['normed_rescaled_cond'] = tmp['rescaled_cond_nS'] / tmp.groupby('time [ms]')['rescaled_cond_nS'].transform('sum')
-            tmp = tmp[['time [ms]', 'comp', 'normed_rescaled_cond']]
+            # keep only time, compartment, normed&rescaled conductance, and rescaled conductance
+            tmp = tmp[['time [ms]', 'comp', 'normed_rescaled_cond', 'rescaled_cond_nS']]
             # fill 0 where nan resulted from normalization (divide by total conductance of 0)
             tmp = tmp.fillna(0)
             # integrate cond per comp over time using time step according to interpol_dt
-            tmp = pd.DataFrame(tmp.groupby('comp')['normed_rescaled_cond'].sum())*interpol_dt_ms
+            tmp = pd.DataFrame(tmp.groupby('comp')['normed_rescaled_cond','rescaled_cond_nS'].sum())*interpol_dt_ms
             # annotate
             tmp['radius_um'] = radius
             tmp['angle_rad'] = angle
