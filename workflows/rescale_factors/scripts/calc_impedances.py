@@ -1,22 +1,36 @@
 from neurostim.cell import Cell
-from neurostim import models
+from neurostim.analysis import quick_sim_setup
+from neurostim.utils import convert_polar_to_cartesian_xz
+from neurostim.analysis import get_AP_count
+import numpy as np
+import pandas as pd
+from neuron import h
 from neat import GreensTree
 from neat import FourrierTools
-import numpy as np
 
-cellmodel = getattr(models,str(snakemake.wildcards.cell_id))
-cell_dict = dict(
-    model=cellmodel(),
-    ChR_soma_density=13e9,
-    ChR_distribution='uniform'
+simcontrol = quick_sim_setup(
+    cell_dict = dict(
+        cellmodel=str(snakemake.wildcards.cell_id),
+        ChR_soma_density=13e9,
+        ChR_distribution='uniform'
+    ),
+    stimulator_dict = dict(
+        diameter_um=200,
+        NA=0.22
+    )
 )
-cell = Cell(**cell_dict)
-
-ph_tree = cell.ph_tree
-uni_locs = ph_tree.distributeLocsUniform(dx=int(snakemake.params.dx))
-
-
-greens_tree = ph_tree.__copy__(new_tree=GreensTree())
+secs = simcontrol.cell.sections
+allsegment_locs = []
+for sec in secs:
+    for seg in sec:
+        allsegment_locs.append(
+            dict(
+                node=int(sec.name()),
+                x=seg.x
+            )
+        )
+# set up greenstree for impedance calculations        
+greens_tree = simcontrol.cell.ph_tree.__copy__(new_tree=GreensTree())
 
 # calc impedance kernels from 0 to 50 ms
 # create a Fourriertools instance with the temporal array on which to evaluate the impedance kernel
@@ -34,7 +48,7 @@ greens_tree.setImpedance(ft.s)
 
 # record input resistances
 data = []
-for loc in uni_locs:
+for loc in allsegment_locs:
     # input resistance:
     ir = greens_tree.calcZF(loc, loc)[ft.ind_0s].real
     data.append([loc['node'], loc['x'], ir])

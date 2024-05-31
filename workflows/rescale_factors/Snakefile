@@ -48,8 +48,6 @@ rule simulate:
 rule calc_impedances:
   output:
     'workflows/rescale_factors/rank_compartments/comp_impedances/{cell_id}.npy'
-  params:
-    dx=20 # resolution over which locations are recorded on neuron morphology
   script:
     'scripts/calc_impedances.py'
 
