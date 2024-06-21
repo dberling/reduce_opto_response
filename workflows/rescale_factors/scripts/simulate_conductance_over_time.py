@@ -99,11 +99,13 @@ for intensity in intensities:
             tmp['cond_nS'] = tmp['dens_cond_SPERcm2'] * 1e9 * tmp['seg_area_um2'] * (1e-4)**2
             # calculate recale_factor(conductance) times conductance
             tmp['rescaled_cond_nS'] = tmp['cond_nS'] / (1 + tmp['ir-ir_soma'] * tmp['cond_nS'])
+            # sum rescaled conductance over comps per time step
+            tmpsum = pd.DataFrame(tmp.groupby('time [ms]')['rescaled_cond_nS'].sum())
             # annotate
-            tmp['radius_um'] = radius
-            tmp['angle_rad'] = angle
-            tmp['intensity_mWPERmm2'] = intensity
-            results.append(tmp)
+            tmpsum['radius_um'] = radius
+            tmpsum['angle_rad'] = angle
+            tmpsum['intensity_mWPERmm2'] = intensity
+            results.append(tmpsum)
 
 pd.concat(results).to_csv(str(snakemake.output[0]))
 pd.DataFrame(APCs).to_csv(str(snakemake.output[1]))

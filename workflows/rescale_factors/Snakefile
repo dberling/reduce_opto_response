@@ -1,8 +1,8 @@
 import numpy as np
 
 cells = config['cells']
-radii = np.arange(0, 25, 25)
-angles = np.arange(0, 2*np.pi, np.pi)
+radii = np.arange(0, 600, 25)
+angles = np.arange(0, 2*np.pi, np.pi/4)
 rel_intensities = np.array([1, 5, 25, 125, 625])
 
 rule all:

@@ -106,7 +106,7 @@ for intensity in intensities:
             # fill 0 where nan resulted from normalization (divide by total conductance of 0)
             tmp = tmp.fillna(0)
             # integrate cond per comp over time using time step according to interpol_dt
-            tmp = pd.DataFrame(tmp.groupby('comp')['normed_rescaled_cond','rescaled_cond_nS'].sum())*interpol_dt_ms
+            tmp = pd.DataFrame(tmp.groupby('comp')[['normed_rescaled_cond','rescaled_cond_nS']].sum())*interpol_dt_ms
             # annotate
             tmp['radius_um'] = radius
             tmp['angle_rad'] = angle
