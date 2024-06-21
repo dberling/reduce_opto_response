@@ -17,7 +17,13 @@ srun make installcheck
 
 # conda install snakemake, add channels bioconda (snakemake) & conda-forge (eido dependency)
 
+* If you only want to run snakemake locally:
+
 conda install -c bioconda -c conda-forge snakemake
+
+* If you want to run snakemake via a slurm cluster:
+
+conda install -c bioconda -c conda-forge snakemake snakemake-executor-plugin-cluster-generic
 
 # pip-install packages:
 
@@ -54,3 +60,7 @@ git checkout model-pipeline
 ## compile NEURON mod files:
 
 neatmodels install -p NEAST_models/BBP/bbpchannels.py --neuronresource simneurostim/model/mod/optostimmods/
+
+# Execute workflow
+
+Run submit_snake.sh
