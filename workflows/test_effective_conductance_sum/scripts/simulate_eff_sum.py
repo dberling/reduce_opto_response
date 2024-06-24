@@ -26,7 +26,7 @@ soma.insert('g_chanrhod')
 
 thresh_int = np.load(str(snakemake.input[0]))
 
-intensities = np.array(snakemake.params.rel_intensity) * thresh_int
+intensities = np.round(np.array(snakemake.params.rel_intensity) * thresh_int, 8)
 radii_um = np.array([float(snakemake.wildcards.radius_um)])
 angles_rad=np.array(snakemake.params.angles_rad)
 
