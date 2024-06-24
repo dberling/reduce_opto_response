@@ -107,5 +107,5 @@ for intensity in intensities:
             tmpsum['intensity_mWPERmm2'] = intensity
             results.append(tmpsum)
 
-pd.concat(results).to_csv(str(snakemake.output[0]))
-pd.DataFrame(APCs).to_csv(str(snakemake.output[1]))
+pd.concat(results).to_csv(str(snakemake.output[1]))
+pd.DataFrame(APCs).to_csv(str(snakemake.output[0]))
