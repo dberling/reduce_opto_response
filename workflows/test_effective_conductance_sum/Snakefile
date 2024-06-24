@@ -3,7 +3,7 @@ import numpy as np
 cells = config['cells']
 radii = np.arange(0, 375, 25)
 angles = np.arange(0, 2*np.pi, np.pi/4)
-rel_intensities = np.array([1, 2.5, 6, 16, 40, 98, 244])
+rel_intensities = np.array([0.5, 0.7, 1, 1.5, 2.5, 3, 6, 16, 40, 98, 244])
 
 rule all:
   input: 
