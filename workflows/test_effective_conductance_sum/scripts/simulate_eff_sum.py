@@ -33,10 +33,6 @@ angles_rad=np.array(snakemake.params.angles_rad)
 # Define recording variables
 rec_vars = [[],[]]
 # append time and soma voltage recoding
-rec_vars[0].append('time [ms]')
-rec_vars[1].append(h._ref_t)
-rec_vars[0].append('v_soma_mV')
-rec_vars[1].append(soma(0.5)._ref_v)
 
 APCs = []
 for intensity in intensities:
@@ -51,6 +47,10 @@ for intensity in intensities:
             # driving stimulus
             t = h.Vector(time_ms)
             y = h.Vector(conductance_nS)
+
+            # rec variables
+            rec_time = h.Vector().record(h._ref_t)
+            rec_v = h.Vector().record(soma(0.5)._ref_v)
 
             # run simulation with injected conductance
             h.load_file('stdrun.hoc')
