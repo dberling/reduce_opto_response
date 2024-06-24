@@ -10,7 +10,10 @@ rule all:
     expand('workflows/test_effective_conductance_sum/data/APC_eff_sum_{cell_id}.csv',
            cell_id=cells
     ),
-    expand('workflows/test_effective_conductance_sum/data/APC_full_{cell_id}.csv',
+    expand('workflows/test_effective_conductance_sum/data/APC_full_passive_{cell_id}.csv',
+           cell_id=cells
+    ),
+    expand('workflows/test_effective_conductance_sum/data/APC_full_active_{cell_id}.csv',
            cell_id=cells
     )
 
@@ -24,12 +27,22 @@ rule merge_eff_sum:
     )
   script: 'scripts/merge_data.py'
 
-rule merge_full:
+rule merge_full_passive:
   output: 
-    'workflows/test_effective_conductance_sum/data/APC_full_{cell_id}.csv'
+    'workflows/test_effective_conductance_sum/data/APC_full_passive_{cell_id}.csv'
   input: 
     expand(
-        'workflows/test_effective_conductance_sum/data/full_data/{{cell_id}}/APC_{radius_um}.csv',
+        'workflows/test_effective_conductance_sum/data/full_passive_data/{{cell_id}}/APC_{radius_um}.csv',
+        radius_um = radii 
+    )
+  script: 'scripts/merge_data.py'
+
+rule merge_full_active:
+  output: 
+    'workflows/test_effective_conductance_sum/data/APC_full_active_{cell_id}.csv'
+  input: 
+    expand(
+        'workflows/test_effective_conductance_sum/data/full_active_data/{{cell_id}}/APC_{radius_um}.csv',
         radius_um = radii 
     )
   script: 'scripts/merge_data.py'
@@ -39,17 +52,17 @@ rule simulate_eff_sum:
     'workflows/test_effective_conductance_sum/data/eff_sum_data/{cell_id}/APC_{radius_um}.csv'
   input: 
     'thresh_intensity/{cell_id}.npy',
-    'workflows/test_effective_conductance_sum/data/full_data/{cell_id}/conductance_{radius_um}.csv'
+    'workflows/test_effective_conductance_sum/data/full_passive_data/{cell_id}/conductance_{radius_um}.csv'
   params:
     rel_intensity=rel_intensities,
     angles_rad=angles
   script: 
     'scripts/simulate_eff_sum.py'
 
-rule simulate_full:
+rule simulate_full_passive:
   output: 
-    'workflows/test_effective_conductance_sum/data/full_data/{cell_id}/APC_{radius_um}.csv',
-    'workflows/test_effective_conductance_sum/data/full_data/{cell_id}/conductance_{radius_um}.csv'
+    'workflows/test_effective_conductance_sum/data/full_passive_data/{cell_id}/APC_{radius_um}.csv',
+    'workflows/test_effective_conductance_sum/data/full_passive_data/{cell_id}/conductance_{radius_um}.csv'
   input: 
     'thresh_intensity/{cell_id}.npy',
     'workflows/rescale_factors/rank_compartments/comp_impedances/{cell_id}.npy'
@@ -58,6 +71,17 @@ rule simulate_full:
     angles_rad=angles
   script: 
     'scripts/simulate_conductance_over_time.py'
+
+rule simulate_full_active:
+  output: 
+    'workflows/test_effective_conductance_sum/data/full_active_data/{cell_id}/APC_{radius_um}.csv',
+  input: 
+    'thresh_intensity/{cell_id}.npy',
+  params:
+    rel_intensity=rel_intensities,
+    angles_rad=angles
+  script: 
+    'scripts/simulate_active.py'
 
 rule calc_impedances:
   output:
