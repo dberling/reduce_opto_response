@@ -48,7 +48,7 @@ rule simulate_eff_sum:
 
 rule simulate_full:
   output: 
-    'workflows/test_effective_conductance_sum/data/full_data/{cell_id}/APC_{radius_um}.csv'
+    'workflows/test_effective_conductance_sum/data/full_data/{cell_id}/APC_{radius_um}.csv',
     'workflows/test_effective_conductance_sum/data/full_data/{cell_id}/conductance_{radius_um}.csv'
   input: 
     'thresh_intensity/{cell_id}.npy',
