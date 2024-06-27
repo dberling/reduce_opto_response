@@ -38,12 +38,15 @@ APCs = []
 for intensity in intensities:
     for radius in radii_um:
         for angle in angles_rad:
+            for scale_fct in snakemake.params.cond_scale_factors:
             stim_x_um, stim_y_um = convert_polar_to_cartesian_xz(radius, angle)
             stim_z_um = 0  # cortical surface
 
             # define driving stimulus
             time_ms = cond.loc[radius,angle,intensity]['time [ms]'].values
             conductance_nS = cond.loc[radius,angle,intensity]['rescaled_cond_nS'].values
+            # scale conductance
+            conductance_nS *= float(scale_fct)
             # driving stimulus
             t = h.Vector(time_ms)
             y = h.Vector(conductance_nS)
@@ -75,6 +78,7 @@ for intensity in intensities:
             )
             APCs.append(
                 dict(
+                    cond_scale_factor = float(scale_fct),
                     radius_um = radius,
                     angle_rad = angle,
                     intensity_mWPERmm2 = intensity,
