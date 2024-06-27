@@ -39,50 +39,50 @@ for intensity in intensities:
     for radius in radii_um:
         for angle in angles_rad:
             for scale_fct in snakemake.params.cond_scale_factors:
-            stim_x_um, stim_y_um = convert_polar_to_cartesian_xz(radius, angle)
-            stim_z_um = 0  # cortical surface
+                stim_x_um, stim_y_um = convert_polar_to_cartesian_xz(radius, angle)
+                stim_z_um = 0  # cortical surface
 
-            # define driving stimulus
-            time_ms = cond.loc[radius,angle,intensity]['time [ms]'].values
-            conductance_nS = cond.loc[radius,angle,intensity]['rescaled_cond_nS'].values
-            # scale conductance
-            conductance_nS *= float(scale_fct)
-            # driving stimulus
-            t = h.Vector(time_ms)
-            y = h.Vector(conductance_nS)
+                # define driving stimulus
+                time_ms = cond.loc[radius,angle,intensity]['time [ms]'].values
+                conductance_nS = cond.loc[radius,angle,intensity]['rescaled_cond_nS'].values
+                # scale conductance
+                conductance_nS *= float(scale_fct)
+                # driving stimulus
+                t = h.Vector(time_ms)
+                y = h.Vector(conductance_nS)
 
-            # rec variables
-            rec_time = h.Vector().record(h._ref_t)
-            rec_v = h.Vector().record(soma(0.5)._ref_v)
+                # rec variables
+                rec_time = h.Vector().record(h._ref_t)
+                rec_v = h.Vector().record(soma(0.5)._ref_v)
 
-            # run simulation with injected conductance
-            h.load_file('stdrun.hoc')
+                # run simulation with injected conductance
+                h.load_file('stdrun.hoc')
 
-            # play the stimulus into soma(0.5)'s ina
-            # the last True means to interpolate; it's not the default, but unless
-            # you know what you're doing, you probably want to pass True there
-            y.play(soma(0.5)._ref_gcat2_g_chanrhod, t, True)
+                # play the stimulus into soma(0.5)'s ina
+                # the last True means to interpolate; it's not the default, but unless
+                # you know what you're doing, you probably want to pass True there
+                y.play(soma(0.5)._ref_gcat2_g_chanrhod, t, True)
 
-            h.v_init, h.tstop= -70, 500
-            h.run()
+                h.v_init, h.tstop= -70, 500
+                h.run()
 
-            # measure APC
-            APC = get_AP_count(
-                df=pd.DataFrame(
-                    columns=['time [ms]','V_soma(0.5)'],
-                    data = np.array([rec_time, rec_v]).T
-                ),
-                interpol_dt_ms=0.1,
-                t_on_ms=1,
-                AP_threshold_mV=0
-            )
-            APCs.append(
-                dict(
-                    cond_scale_factor = float(scale_fct),
-                    radius_um = radius,
-                    angle_rad = angle,
-                    intensity_mWPERmm2 = intensity,
-                    APC=APC
+                # measure APC
+                APC = get_AP_count(
+                    df=pd.DataFrame(
+                        columns=['time [ms]','V_soma(0.5)'],
+                        data = np.array([rec_time, rec_v]).T
+                    ),
+                    interpol_dt_ms=0.1,
+                    t_on_ms=1,
+                    AP_threshold_mV=0
                 )
-            )
+                APCs.append(
+                    dict(
+                        cond_scale_factor = float(scale_fct),
+                        radius_um = radius,
+                        angle_rad = angle,
+                        intensity_mWPERmm2 = intensity,
+                        APC=APC
+                    )
+                )
 pd.DataFrame(APCs).to_csv(str(snakemake.output[0]))
