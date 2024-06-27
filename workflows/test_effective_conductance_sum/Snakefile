@@ -55,7 +55,7 @@ rule simulate_eff_sum:
     'workflows/test_effective_conductance_sum/data/full_passive_data/{cell_id}/conductance_{radius_um}.csv'
   params:
     rel_intensity=rel_intensities,
-    angles_rad=angles
+    angles_rad=angles,
     cond_scale_factors = [0.5, 0.75, 1]
   script: 
     'scripts/simulate_eff_sum.py'
