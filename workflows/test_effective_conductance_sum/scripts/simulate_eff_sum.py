@@ -44,7 +44,7 @@ for intensity in intensities:
 
                 # define driving stimulus
                 time_ms = cond.loc[radius,angle,intensity]['time [ms]'].values
-                conductance_nS = cond.loc[radius,angle,intensity]['rescaled_cond_nS'].values
+                conductance_nS = cond.loc[radius,angle,intensity]['rescaled_cond_nS'].values.copy()
                 # scale conductance
                 conductance_nS *= float(scale_fct)
                 # driving stimulus
@@ -82,7 +82,8 @@ for intensity in intensities:
                         radius_um = radius,
                         angle_rad = angle,
                         intensity_mWPERmm2 = intensity,
-                        APC=APC
+                        APC=APC,
+                        condsum = np.sum(conductance_nS)
                     )
                 )
 pd.DataFrame(APCs).to_csv(str(snakemake.output[0]))
