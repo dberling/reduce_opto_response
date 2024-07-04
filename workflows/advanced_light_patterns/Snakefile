@@ -1,0 +1,99 @@
+import numpy as np
+
+rule all:
+  input: 
+    expand('workflows/advanced_light_patterns/data/APC_eff_sum_{cell_id}.csv',
+           cell_id=config['cells']
+    ),
+    expand('workflows/advanced_light_patterns/data/APC_full_passive_{cell_id}.csv',
+           cell_id=config['cells']
+    ),
+    expand('workflows/advanced_light_patterns/data/APC_full_active_{cell_id}.csv',
+           cell_id=config['cells']
+    )
+
+rule merge_eff_sum:
+  output: 
+    'workflows/advanced_light_patterns/data/APC_eff_sum_{cell_id}.csv',
+  input: 
+    expand(
+        'workflows/advanced_light_patterns/data/eff_sum_data/{{cell_id}}/APC_for_lp_{lp_config}-id_{patt_id}.csv',
+        lp_config=config['lp_config'],
+        patt_id=np.arange(config['pattern_iterations'])
+    )
+  script: 'scripts/merge_data.py'
+
+rule merge_full_passive:
+  output: 
+    'workflows/advanced_light_patterns/data/APC_full_passive_{cell_id}.csv'
+  input: 
+    expand(
+        'workflows/advanced_light_patterns/data/full_passive_data/{{cell_id}}/APC_for_lp_{lp_config}-id_{patt_id}.csv',
+        lp_config=config['lp_config'],
+        patt_id=np.arange(config['pattern_iterations'])
+    )
+  script: 'scripts/merge_data.py'
+
+rule merge_full_active:
+  output: 
+    'workflows/advanced_light_patterns/data/APC_full_active_{cell_id}.csv'
+  input: 
+    expand(
+        'workflows/advanced_light_patterns/data/full_active_data/{{cell_id}}/APC_for_lp_{lp_config}-id_{patt_id}.csv',
+        lp_config=config['lp_config'],
+        patt_id=np.arange(config['pattern_iterations'])
+    )
+  script: 'scripts/merge_data.py'
+
+rule simulate_eff_sum:
+  output: 
+    'workflows/advanced_light_patterns/data/eff_sum_data/{cell_id}/APC_for_lp_{lp_config}-id_{patt_id}.csv'
+  input: 
+    'workflows/advanced_light_patterns/data/thresh_intensity/{cell_id}/lp_{lp_config}-id_{patt_id}.npy',
+    'workflows/advanced_light_patterns/data/full_passive_data/{cell_id}/cond_for_lp_{lp_config}-id_{patt_id}.csv'
+  params:
+    rel_intensity=config['rel_intensities'],
+    cond_scale_factors = [0.5, 0.75, 1.]
+  script: 
+    'scripts/simulate_eff_sum.py'
+
+rule simulate_full_passive:
+  output: 
+    'workflows/advanced_light_patterns/data/full_passive_data/{cell_id}/APC_for_lp_{lp_config}-id_{patt_id}.csv',
+    'workflows/advanced_light_patterns/data/full_passive_data/{cell_id}/cond_for_lp_{lp_config}-id_{patt_id}.csv'
+  input: 
+    'workflows/advanced_light_patterns/data/thresh_intensity/{cell_id}/lp_{lp_config}-id_{patt_id}.npy',
+    'workflows/rescale_factors/rank_compartments/comp_impedances/{cell_id}.npy',
+    'workflows/advanced_light_patterns/data/light_patterns/lp_{lp_config}-id_{patt_id}.csv'
+  params:
+    rel_intensity=config['rel_intensities'],
+  script: 
+    'scripts/simulate_conductance_over_time.py'
+
+rule simulate_full_active:
+  output: 
+    'workflows/advanced_light_patterns/data/full_active_data/{cell_id}/APC_for_lp_{lp_config}-id_{patt_id}.csv'
+  input: 
+    'workflows/advanced_light_patterns/data/thresh_intensity/{cell_id}/lp_{lp_config}-id_{patt_id}.npy',
+    'workflows/advanced_light_patterns/data/light_patterns/lp_{lp_config}-id_{patt_id}.csv'
+  params:
+    rel_intensity=config['rel_intensities']
+  script: 
+    'scripts/simulate_active.py'
+
+rule calc_impedances:
+  output:
+    'workflows/rescale_factors/rank_compartments/comp_impedances/{cell_id}.npy'
+  script:
+    'scripts/calc_impedances.py'
+
+rule find_threshold_stim_intensity:
+  input: 'workflows/advanced_light_patterns/data/light_patterns/lp_{lp_config}-id_{patt_id}.csv'
+  output: 'workflows/advanced_light_patterns/data/thresh_intensity/{cell_id}/lp_{lp_config}-id_{patt_id}.npy'
+  script: 'scripts/find_thresh_intensity_MultiStim.py'
+
+rule gen_light_patterns:
+  output: 
+    'workflows/advanced_light_patterns/data/light_patterns/lp_{lp_config}-id_{patt_id}.csv'
+  script:
+    'scripts/gen_light_patterns.py'

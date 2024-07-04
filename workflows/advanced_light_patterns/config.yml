@@ -1,0 +1,10 @@
+cells: [
+  'L23_PC_cADpyr229_1_passdends',
+  'L23_PC_cADpyr229_2_passdends',
+  'L23_PC_cADpyr229_3_passdends',
+  'L23_PC_cADpyr229_4_passdends',
+  'L23_PC_cADpyr229_5_passdends',
+]
+rel_intensities: [1, 10, 100]
+lp_config: ['config0', 'config1', 'config2']
+pattern_iterations: 100
