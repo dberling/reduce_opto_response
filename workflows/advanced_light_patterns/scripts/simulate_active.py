@@ -25,7 +25,8 @@ simcontrol = quick_sim_setup_MultiStim(cell_dict, stimulator_config)
 
 thresh_int = np.load(str(snakemake.input[0]))
 
-intensities = np.round(np.array(snakemake.params.rel_intensity) * thresh_int, 10)
+rel_intensities = np.round(np.array(snakemake.params.rel_intensity) * thresh_int, 10)
+intensities = np.round(rel_intensities * thresh_int, 10)
 
 temp_protocol=dict(
     duration_ms=200,
@@ -43,7 +44,7 @@ rec_vars[0].append('v_soma_mV')
 rec_vars[1].append(simcontrol.cell.model.soma_sec(0.5)._ref_v)
 
 APCs = []
-for intensity in intensities:
+for rel_intensity, intensity in zip(rel_intensities, intensities):
     tmp = simcontrol.run(
         temp_protocol=temp_protocol,
         stim_location=(0, 0, 0),
@@ -65,6 +66,7 @@ for intensity in intensities:
             lp_config = str(snakemake.wildcards.lp_config),
             patt_id = int(snakemake.wildcards.patt_id),
             norm_power_mW_of_MultiStimulator = intensity,
+            rel_intensity = rel_intensity,
             APC=APC
         )
     )

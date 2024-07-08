@@ -26,14 +26,15 @@ soma.insert('g_chanrhod')
 
 thresh_int = np.load(str(snakemake.input[0]))
 
-intensities = np.round(np.array(snakemake.params.rel_intensity) * thresh_int, 10)
+rel_intensities = np.round(np.array(snakemake.params.rel_intensity) * thresh_int, 10)
+intensities = np.round(rel_intensities * thresh_int, 10)
 
 # Define recording variables
 rec_vars = [[],[]]
 # append time and soma voltage recoding
 
 APCs = []
-for intensity in intensities:
+for rel_intensity, intensity in zip(rel_intensities, intensities):
     for scale_fct in snakemake.params.cond_scale_factors:
         # define driving stimulus
         time_ms = cond.loc[intensity]['time [ms]'].values
@@ -75,6 +76,7 @@ for intensity in intensities:
                 patt_id = int(snakemake.wildcards.patt_id),
                 cond_scale_factor = float(scale_fct),
                 norm_power_mW_of_MultiStimulator = intensity,
+                rel_intensity = rel_intensity,
                 APC=APC,
                 condsum = np.sum(conductance_nS)
             )
