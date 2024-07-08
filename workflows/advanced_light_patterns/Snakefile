@@ -53,7 +53,7 @@ rule simulate_eff_sum:
     'workflows/advanced_light_patterns/data/full_passive_data/{cell_id}/cond_for_lp_{lp_config}-id_{patt_id}.csv'
   params:
     rel_intensity=config['rel_intensities'],
-    cond_scale_factors = [0.5, 0.75, 1.]
+    cond_scale_factors = config['cond_scale_factors']
   script: 
     'scripts/simulate_eff_sum.py'
 
