@@ -4,11 +4,13 @@ import ast
 from neurostim.analysis import quick_sim_setup_MultiStim
 from neurostim.analysis import find_intensity_range
 
-# cell parameters
-cell_dict=dict(
-    cellmodel=str(snakemake.wildcards.cell_id),
-    ChR_soma_density=13e9, # equals 130 ch/um2
-    ChR_distribution="uniform"
+passive_cell_name = str(snakemake.wildcards.cell_id)
+active_cell_name = passive_cell_name[:-10]
+
+cell_dict = dict(
+    cellmodel=active_cell_name,
+    ChR_soma_density=13e9,
+    ChR_distribution='uniform'
 )
 stimulator_config = pd.read_csv(
         str(snakemake.input), 
