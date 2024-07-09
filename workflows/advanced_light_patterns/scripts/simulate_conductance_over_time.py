@@ -24,7 +24,7 @@ simcontrol = quick_sim_setup_MultiStim(cell_dict, stimulator_config)
 
 thresh_int = np.load(str(snakemake.input[0]))
 
-rel_intensities = np.round(np.array(snakemake.params.rel_intensity) * thresh_int, 10)
+rel_intensities = np.array(snakemake.params.rel_intensity)
 intensities = np.round(rel_intensities * thresh_int, 10)
 
 temp_protocol=dict(
