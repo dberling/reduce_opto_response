@@ -16,3 +16,4 @@ rel_intensities: [1, 3, 6, 10, 30, 60, 100]
 lp_config: ['config0', 'config1', 'config2']
 cond_scale_factors: [0.5]
 pattern_iterations: 100
+target_n_locs: ['9999','100']

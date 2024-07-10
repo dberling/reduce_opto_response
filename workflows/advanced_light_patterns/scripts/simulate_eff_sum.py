@@ -10,6 +10,9 @@ import ast
 cond = pd.read_csv(str(snakemake.input[1]))
 cond = cond.set_index(['norm_power_mW_of_MultiStimulator'])
 
+# load normalization to account for subsampling of conductance locations
+cond_norm_factor = np.load(str(snakemake.input[2]))
+
 # set up neuron model
 cellmodel = getattr(models, str(snakemake.wildcards.cell_id))
 cell = Cell(
@@ -39,7 +42,9 @@ for rel_intensity, intensity in zip(rel_intensities, intensities):
         # define driving stimulus
         time_ms = cond.loc[intensity]['time [ms]'].values
         conductance_nS = cond.loc[intensity]['rescaled_cond_nS'].values.copy()
-        # scale conductance
+        # scale conductance according to compensate for subsampling of compartments
+        conductance_nS *= float(cond_norm_factor)
+        # scale conductance according to general scale factor
         conductance_nS *= float(scale_fct)
         # driving stimulus
         t = h.Vector(time_ms)

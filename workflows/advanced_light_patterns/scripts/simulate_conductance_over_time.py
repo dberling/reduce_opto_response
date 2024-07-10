@@ -4,6 +4,22 @@ import numpy as np
 import pandas as pd
 from neuron import h
 import ast
+import re
+
+def extract_target_n_locs(path):
+    pattern = r"n_locs_(\d+)\.npy"
+    match = re.search(pattern, path)
+    if match:
+        return int(match.group(1))
+    else:
+        raise ValueError("The path does not contain target_n_locs in the expected format")
+
+comp_subsets = []
+for locs_file in snakemake.input[3:]:
+    uni_locs = np.load(str(locs_file))
+    uni_locs_str = ['_'.join([str(int(loc[0])), str(loc[1])]) for loc in uni_locs]
+    comp_subsets.append(uni_locs_str)
+    comp_subset_labels.append(str(extract_target_n_locs(str(locs_file))))
 
 passive_cell_name = str(snakemake.wildcards.cell_id)
 
@@ -102,14 +118,23 @@ for rel_intensity, intensity in zip(rel_intensities, intensities):
             tmp['cond_nS'] = tmp['dens_cond_SPERcm2'] * 1e9 * tmp['seg_area_um2'] * (1e-4)**2
             # calculate recale_factor(conductance) times conductance
             tmp['rescaled_cond_nS'] = tmp['cond_nS'] / (1 + tmp['ir-ir_soma'] * tmp['cond_nS'])
-            # sum rescaled conductance over comps per time step
-            tmpsum = pd.DataFrame(tmp.groupby('time [ms]')['rescaled_cond_nS'].sum())
-            # annotate
-            tmpsum['lp_config'] = str(snakemake.wildcards.lp_config)
-            tmpsum['patt_id'] = int(snakemake.wildcards.patt_id)
-            tmpsum['norm_power_mW_of_MultiStimulator'] = intensity
-            tmpsum['rel_intensity'] = rel_intensity
-            results.append(tmpsum)
 
-pd.concat(results).to_csv(str(snakemake.output[1]))
+            for idx, (comp_set, label) in enumerate(zip(comp_subsets, comp_subset_labels)):
+                mask = tmp.comp.isin(comp_set)
+                masked_tmp = tmp.loc[mask]
+                # sum rescaled conductance over comps per time step
+                tmpsum = pd.DataFrame(masked_tmp.groupby('time [ms]')['rescaled_cond_nS'].sum()).rename(
+                    columns=dict(rescaled_cond_nS='rescaled_cond_nS')
+                )
+                # annotate
+                tmpsum['lp_config'] = str(snakemake.wildcards.lp_config)
+                tmpsum['patt_id'] = int(snakemake.wildcards.patt_id)
+                tmpsum['norm_power_mW_of_MultiStimulator'] = intensity
+                tmpsum['rel_intensity'] = rel_intensity
+                tmpsum['rec_cond_locs'] = label
+                results[idx].append(tmpsum)
+
+for result, output in zip(results, snakemake.output[1:]):
+    pd.concat(result).to_csv(str(output))
+
 pd.DataFrame(APCs).to_csv(str(snakemake.output[0]))

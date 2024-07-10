@@ -17,9 +17,10 @@ rule merge_eff_sum:
     'workflows/advanced_light_patterns/data/APC_eff_sum_{cell_id}.csv',
   input: 
     expand(
-        'workflows/advanced_light_patterns/data/eff_sum_data/{{cell_id}}/APC_for_lp_{lp_config}-id_{patt_id}.csv',
+        'workflows/advanced_light_patterns/data/eff_sum_data/{{cell_id}}/rec_cond_locs_{target_n_locs}/APC_for_lp_{lp_config}-id_{patt_id}.csv',
         lp_config=config['lp_config'],
-        patt_id=np.arange(config['pattern_iterations'])
+        patt_id=np.arange(config['pattern_iterations']),
+        target_n_locs=config['target_n_locs']
     )
   script: 'scripts/merge_data.py'
 
@@ -47,24 +48,45 @@ rule merge_full_active:
 
 rule simulate_eff_sum:
   output: 
-    'workflows/advanced_light_patterns/data/eff_sum_data/{cell_id}/APC_for_lp_{lp_config}-id_{patt_id}.csv'
+    'workflows/advanced_light_patterns/data/eff_sum_data/{cell_id}/rec_cond_locs_{target_n_locs}/APC_for_lp_{lp_config}-id_{patt_id}.csv'
   input: 
     'workflows/advanced_light_patterns/data/thresh_intensity/{cell_id}/lp_{lp_config}-id_{patt_id}.npy',
-    'workflows/advanced_light_patterns/data/full_passive_data/{cell_id}/cond_for_lp_{lp_config}-id_{patt_id}.csv'
+    'workflows/advanced_light_patterns/data/full_passive_data/{cell_id}/cond_for_lp_{lp_config}-id_{patt_id}_target_n_locs{target_n_locs}.csv',
+    'workflows/advanced_light_patterns/data/reduced_comp_normalization/cell_{cell_id}__n_locs_{target_n_locs}.npy'
   params:
     rel_intensity=config['rel_intensities'],
     cond_scale_factors = config['cond_scale_factors']
   script: 
     'scripts/simulate_eff_sum.py'
 
+rule calc_reduced_comps_normalization:
+  output:
+    'workflows/advanced_light_patterns/data/reduced_comp_normalization/cell_{cell_id}__n_locs_{target_n_locs}.npy'
+  input:
+    expand(
+      'workflows/advanced_light_patterns/data/full_passive_data/{{cell_id}}/cond_for_lp_{lp_config}-id_{patt_id}_target_n_locs{target_n_locs}.csv',
+      lp_config=config['lp_config'],
+      patt_id=np.arange(config['pattern_iterations']),
+      target_n_locs=config['target_n_locs']
+    )
+  script:
+    'scripts/calc_reduced_comps_normalization.py'
+
 rule simulate_full_passive:
   output: 
     'workflows/advanced_light_patterns/data/full_passive_data/{cell_id}/APC_for_lp_{lp_config}-id_{patt_id}.csv',
-    'workflows/advanced_light_patterns/data/full_passive_data/{cell_id}/cond_for_lp_{lp_config}-id_{patt_id}.csv'
+    expand(
+      'workflows/advanced_light_patterns/data/full_passive_data/{{cell_id}}/cond_for_lp_{{lp_config}}-id_{{patt_id}}_target_n_locs{target_n_locs}.csv',
+      target_n_locs=config['target_n_locs']
+    )
   input: 
     'workflows/advanced_light_patterns/data/thresh_intensity/{cell_id}/lp_{lp_config}-id_{patt_id}.npy',
     'workflows/rescale_factors/rank_compartments/comp_impedances/{cell_id}.npy',
-    'workflows/advanced_light_patterns/data/light_patterns/lp_{lp_config}-id_{patt_id}.csv'
+    'workflows/advanced_light_patterns/data/light_patterns/lp_{lp_config}-id_{patt_id}.csv',
+    expand(
+      'workflows/advanced_light_patterns/data/cond_recording_locations/{{cell_id}}/n_locs_{target_n_locs}.npy',
+      target_n_locs=config['target_n_locs']
+    )
   params:
     rel_intensity=config['rel_intensities'],
   script: 
@@ -80,6 +102,14 @@ rule simulate_full_active:
     rel_intensity=config['rel_intensities']
   script: 
     'scripts/simulate_active.py'
+
+rule distribute_cond_recording_locations:
+  input:
+    'workflows/rescale_factors/rank_compartments/comp_impedances/{cell_id}.npy'
+  output:
+    'workflows/advanced_light_patterns/data/cond_recording_locations/{cell_id}/n_locs_{target_n_locs}.npy'
+  script:
+    'scripts/distribute_comp_locs.py'
 
 rule calc_impedances:
   output:
