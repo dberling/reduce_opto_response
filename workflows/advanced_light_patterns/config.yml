@@ -3,17 +3,14 @@ cells: [
   'L23_PC_cADpyr229_2_passdends',
   'L23_PC_cADpyr229_3_passdends',
   'L23_PC_cADpyr229_4_passdends',
-  'L23_PC_cADpyr229_5_passdends',
   'L4_PC_cADpyr230_1_passdends',
   'L4_PC_cADpyr230_2_passdends',
   'L4_PC_cADpyr230_3_passdends',
   'L4_PC_cADpyr230_4_passdends',
-  'L4_PC_cADpyr230_5_passdends',
   'L4_SS_cADpyr230_1_passdends',
   'L4_SS_cADpyr230_2_passdends',
   'L4_SS_cADpyr230_3_passdends',
   'L4_SS_cADpyr230_4_passdends',
-  'L4_SS_cADpyr230_5_passdends',
 ]
 rel_intensities: [1, 3, 6, 10, 30, 60, 100]
 lp_config: ['config0', 'config1', 'config2']
