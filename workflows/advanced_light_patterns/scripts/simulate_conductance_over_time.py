@@ -81,7 +81,7 @@ comp_df= pd.DataFrame(
 )
 comp_df['ir-ir_soma'] = comp_df["input_r"] - comp_df.loc[comp_df['comp']=='1_0.5']['input_r'].values[0]
 
-results = []
+results = [[] for label in comp_subset_labels]
 APCs = []
 for rel_intensity, intensity in zip(rel_intensities, intensities):
             tmp = simcontrol.run(
