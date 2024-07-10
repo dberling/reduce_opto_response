@@ -15,6 +15,7 @@ def extract_target_n_locs(path):
         raise ValueError("The path does not contain target_n_locs in the expected format")
 
 comp_subsets = []
+comp_subset_labels = []
 for locs_file in snakemake.input[3:]:
     uni_locs = np.load(str(locs_file))
     uni_locs_str = ['_'.join([str(int(loc[0])), str(loc[1])]) for loc in uni_locs]
