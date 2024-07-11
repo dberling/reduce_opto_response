@@ -82,6 +82,7 @@ for rel_intensity, intensity in zip(rel_intensities, intensities):
                 cond_scale_factor = float(scale_fct),
                 norm_power_mW_of_MultiStimulator = intensity,
                 rel_intensity = rel_intensity,
+                rec_cond_locs = str(snakemake.wildcards.target_n_locs),
                 APC=APC,
                 condsum = np.sum(conductance_nS)
             )
