@@ -6,6 +6,12 @@ if str(snakemake.wildcards.target_n_locs) == '9999':
     node_x_resistance = np.load(str(snakemake.input[0]))
     all_locs = node_x_resistance[:,0:2]
     np.save(str(snakemake.output),all_locs)
+elif str(snakemake.wildcards.target_n_locs) == '1':
+    # use only soma compartment of neuron according to impedance file:
+    node_x_resistance = np.load(str(snakemake.input[0]))
+    all_locs = node_x_resistance[:1,0:2]
+    assert all_locs[0][0] == 1, "compartment is not soma comp"
+    np.save(str(snakemake.output),all_locs)
 else:
     simcontrol = quick_sim_setup(
         cell_dict=dict(

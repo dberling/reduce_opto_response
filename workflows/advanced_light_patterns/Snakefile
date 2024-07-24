@@ -2,6 +2,9 @@ import numpy as np
 
 rule all:
   input: 
+    expand('workflows/advanced_light_patterns/data/APC_active_eff_sum_{cell_id}.csv',
+           cell_id=config['cells']
+    ),
     expand('workflows/advanced_light_patterns/data/APC_eff_sum_{cell_id}.csv',
            cell_id=config['cells']
     ),
@@ -11,6 +14,18 @@ rule all:
     expand('workflows/advanced_light_patterns/data/APC_full_active_{cell_id}.csv',
            cell_id=config['cells']
     )
+
+rule merge_eff_sum_active:
+  output: 
+    'workflows/advanced_light_patterns/data/APC_active_eff_sum_{cell_id}.csv',
+  input: 
+    expand(
+        'workflows/advanced_light_patterns/data/active_eff_sum_data/{{cell_id}}/rec_cond_locs_{target_n_locs}/APC_for_lp_{lp_config}-id_{patt_id}.csv',
+        lp_config=config['lp_config'],
+        patt_id=np.arange(config['pattern_iterations']),
+        target_n_locs=config['target_n_locs']
+    )
+  script: 'scripts/merge_data.py'
 
 rule merge_eff_sum:
   output: 
@@ -45,6 +60,19 @@ rule merge_full_active:
         patt_id=np.arange(config['pattern_iterations'])
     )
   script: 'scripts/merge_data.py'
+
+rule simulate_eff_sum_active:
+  output: 
+    'workflows/advanced_light_patterns/data/active_eff_sum_data/{cell_id}/rec_cond_locs_{target_n_locs}/APC_for_lp_{lp_config}-id_{patt_id}.csv'
+  input: 
+    'workflows/advanced_light_patterns/data/thresh_intensity/{cell_id}/lp_{lp_config}-id_{patt_id}.npy',
+    'workflows/advanced_light_patterns/data/full_passive_data/{cell_id}/cond_for_lp_{lp_config}-id_{patt_id}_target_n_locs{target_n_locs}.csv',
+    'workflows/advanced_light_patterns/data/reduced_comp_normalization/cell_{cell_id}__n_locs_{target_n_locs}.npy'
+  params:
+    rel_intensity=config['rel_intensities'],
+    cond_scale_factors = config['cond_scale_factors']
+  script: 
+    'scripts/simulate_active_eff_sum.py'
 
 rule simulate_eff_sum:
   output: 

@@ -3,17 +3,9 @@ cells: [
   'L23_PC_cADpyr229_2_passdends',
   'L23_PC_cADpyr229_3_passdends',
   'L23_PC_cADpyr229_4_passdends',
-  'L4_PC_cADpyr230_1_passdends',
-  'L4_PC_cADpyr230_2_passdends',
-  'L4_PC_cADpyr230_3_passdends',
-  'L4_PC_cADpyr230_4_passdends',
-  'L4_SS_cADpyr230_1_passdends',
-  'L4_SS_cADpyr230_2_passdends',
-  'L4_SS_cADpyr230_3_passdends',
-  'L4_SS_cADpyr230_4_passdends',
 ]
-rel_intensities: [1, 3, 6, 10, 30, 60, 100]
+rel_intensities: [1, 3, 6, 10, 15, 20, 30, 45, 60, 100, 140, 180]
 lp_config: ['config0', 'config1', 'config2']
-cond_scale_factors: [0.5]
+cond_scale_factors: [1.0]
 pattern_iterations: 100
-target_n_locs: ['9999','100'] # '9999' means all comps are recorded.
+target_n_locs: ['9999'] # '9999' means all comps are recorded.
