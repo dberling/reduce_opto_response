@@ -1,0 +1,29 @@
+cells: [
+  'L23_PC_cADpyr229_1_passdends',
+]
+intensities: [
+  0.001,
+  0.002,
+  0.004,
+  0.008,
+  0.016,
+  0.032,
+  0.064,
+  0.128,
+  0.256,
+  0.512,
+  1.024,
+  2.048,
+  4.096,
+  8.192,
+  16.384,
+  32.768,
+  65.536,
+  131.072,
+  262.144,
+  524.288,
+  1048.576,
+  2097.152]
+lp_config: ['config0', 'config1', 'config2']
+pattern_iterations: 100
+target_n_locs: ['9999'] # '9999' means all comps are recorded.

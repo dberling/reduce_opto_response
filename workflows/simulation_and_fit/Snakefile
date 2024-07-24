@@ -1,0 +1,89 @@
+import numpy as np
+
+rule all:
+  input: 
+    #expand('workflows/simulation_and_fit/data/APC_active_eff_sum_{cell_id}.csv',
+    #       cell_id=config['cells']
+    #),
+    expand('workflows/simulation_and_fit/data/APC_full_active_{cell_id}.csv',
+           cell_id=config['cells']
+    )
+
+rule merge_eff_sum_active:
+  output: 
+    'workflows/simulation_and_fit/data/APC_active_eff_sum_{cell_id}.csv',
+  input: 
+    expand(
+        'workflows/simulation_and_fit/data/active_eff_sum_data/{{cell_id}}/rec_cond_locs_{target_n_locs}/APC_for_lp_{lp_config}-id_{patt_id}.csv',
+        lp_config=config['lp_config'],
+        patt_id=np.arange(config['pattern_iterations']),
+        target_n_locs=config['target_n_locs']
+    )
+  script: 'scripts/merge_data.py'
+
+rule merge_full_active:
+  output: 
+    'workflows/simulation_and_fit/data/APC_full_active_{cell_id}.csv'
+  input: 
+    expand(
+        'workflows/simulation_and_fit/data/full_active_data/{{cell_id}}/APC_for_lp_{lp_config}-id_{patt_id}.csv',
+        lp_config=config['lp_config'],
+        patt_id=np.arange(config['pattern_iterations'])
+    )
+  script: 'scripts/merge_data.py'
+
+rule simulate_eff_sum_active:
+  output: 
+    'workflows/simulation_and_fit/data/active_eff_sum_data/{cell_id}/rec_cond_locs_{target_n_locs}/APC_for_lp_{lp_config}-id_{patt_id}.csv'
+  input: 
+    'workflows/simulation_and_fit/data/conductance_data/{cell_id}/cond_for_lp_{lp_config}-id_{patt_id}_target_n_locs{target_n_locs}.csv',
+    'workflows/simulation_and_fit/data/reduced_comp_normalization/cell_{cell_id}__n_locs_{target_n_locs}.npy'
+  params:
+    intensities=config['intensities'],
+  script: 
+    'scripts/simulate_active_eff_sum.py'
+
+rule fit_reduced_compartment_weights:
+  output:
+    'workflows/simulation_and_fit/data/reduced_comps_weights/{cell_id}/n_locs_{target_n_locs}.npy'
+  input:
+    'workflows/simulation_and_fit/data/cond_recording_locations/{cell_id}/n_locs_{target_n_locs}.npy',
+    expand(
+      'workflows/simulation_and_fit/data/conductance_data/{{cell_id}}/cond_for_lp_{lp_config}-id_{patt_id}.csv',
+      lp_config=config['lp_config'],
+      patt_id=np.arange(config['pattern_iterations'])
+    )
+
+rule simulate_full_active:
+  output: 
+    'workflows/simulation_and_fit/data/full_active_data/{cell_id}/APC_for_lp_{lp_config}-id_{patt_id}.csv',
+    'workflows/simulation_and_fit/data/conductance_data/{cell_id}/cond_for_lp_{lp_config}-id_{patt_id}.csv',
+    'workflows/simulation_and_fit/data/cond_per_comp_data/{cell_id}/cond_for_lp_{lp_config}-id_{patt_id}.csv',
+  input: 
+    'workflows/rescale_factors/rank_compartments/comp_impedances/{cell_id}.npy',
+    'workflows/simulation_and_fit/data/light_patterns/lp_{lp_config}-id_{patt_id}.csv',
+    'workflows/simulation_and_fit/data/cond_recording_locations/{cell_id}/n_locs_9999.npy'
+  params:
+    intensities=config['intensities']
+  script: 
+    'scripts/simulate_active_and_conductances.py'
+
+rule distribute_cond_recording_locations:
+  input:
+    'workflows/rescale_factors/rank_compartments/comp_impedances/{cell_id}.npy'
+  output:
+    'workflows/simulation_and_fit/data/cond_recording_locations/{cell_id}/n_locs_{target_n_locs}.npy'
+  script:
+    'scripts/distribute_comp_locs.py'
+
+rule calc_impedances:
+  output:
+    'workflows/rescale_factors/rank_compartments/comp_impedances/{cell_id}.npy'
+  script:
+    'scripts/calc_impedances.py'
+
+rule gen_light_patterns:
+  output: 
+    'workflows/simulation_and_fit/data/light_patterns/lp_{lp_config}-id_{patt_id}.csv'
+  script:
+    'scripts/gen_light_patterns.py'
