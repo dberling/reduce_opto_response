@@ -14,14 +14,6 @@ def extract_target_n_locs(path):
     else:
         raise ValueError("The path does not contain target_n_locs in the expected format")
 
-comp_subsets = []
-comp_subset_labels = []
-for locs_file in snakemake.input[3:]:
-    uni_locs = np.load(str(locs_file))
-    uni_locs_str = ['_'.join([str(int(loc[0])), str(loc[1])]) for loc in uni_locs]
-    comp_subsets.append(uni_locs_str)
-    comp_subset_labels.append(str(extract_target_n_locs(str(locs_file))))
-
 passive_cell_name = str(snakemake.wildcards.cell_id)
 active_cell_name = passive_cell_name[:-10]
 
@@ -31,7 +23,7 @@ cell_dict = dict(
     ChR_distribution='uniform'
 )
 stimulator_config = pd.read_csv(
-        str(snakemake.input[2]), 
+        str(snakemake.input[1]), 
         index_col='Unnamed: 0'
         ).to_dict(orient='records')
 # convert str(list) to real list:
@@ -50,7 +42,7 @@ temp_protocol=dict(
 interpol_dt_ms=0.1
 
 # load resistances:
-node_x_resistance = np.load(snakemake.input[1])
+node_x_resistance = np.load(snakemake.input[0])
 # helper class to index sections as defined in node_x_resistance
 class getSection():
     def __init__(self, sections):
@@ -121,7 +113,6 @@ for intensity in intensities:
             tmp['lp_config'] = str(snakemake.wildcards.lp_config)
             tmp['patt_id'] = int(snakemake.wildcards.patt_id)
             tmp['norm_power_mW_of_MultiStimulator'] = intensity
-            tmp['rec_cond_locs'] = label
             cond_per_comp.append(tmp)
 
             # sum rescaled conductance over comps per time step
@@ -132,7 +123,6 @@ for intensity in intensities:
             tmpsum['lp_config'] = str(snakemake.wildcards.lp_config)
             tmpsum['patt_id'] = int(snakemake.wildcards.patt_id)
             tmpsum['norm_power_mW_of_MultiStimulator'] = intensity
-            tmpsum['rec_cond_locs'] = label
             condsum.append(tmpsum)
 
 pd.concat(cond_per_comp).to_csv(str(snakemake.output[2]))
