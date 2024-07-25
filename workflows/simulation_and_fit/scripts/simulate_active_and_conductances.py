@@ -6,14 +6,6 @@ from neuron import h
 import ast
 import re
 
-def extract_target_n_locs(path):
-    pattern = r"n_locs_(\d+)\.npy"
-    match = re.search(pattern, path)
-    if match:
-        return int(match.group(1))
-    else:
-        raise ValueError("The path does not contain target_n_locs in the expected format")
-
 passive_cell_name = str(snakemake.wildcards.cell_id)
 active_cell_name = passive_cell_name[:-10]
 
@@ -39,7 +31,7 @@ temp_protocol=dict(
     delay_ms=1,
     total_rec_time_ms=500,
 )
-interpol_dt_ms=0.1
+interpol_dt_ms=1
 
 # load resistances:
 node_x_resistance = np.load(snakemake.input[0])
@@ -75,10 +67,11 @@ condsum = []
 cond_per_comp = []
 APCs = []
 for intensity in intensities:
+        try:
             tmp = simcontrol.run(
                 temp_protocol=temp_protocol,
                 stim_location=(0, 0, 0),
-                stim_intensity_mWPERmm2=None,
+                stim_intensity_mWPERmm2=None,                    
                 rec_vars=rec_vars,
                 interpol_dt_ms=interpol_dt_ms,
                 norm_power_mW_of_MultiStimulator=intensity
@@ -109,11 +102,38 @@ for intensity in intensities:
             tmp['cond_nS'] = tmp['dens_cond_SPERcm2'] * 1e9 * tmp['seg_area_um2'] * (1e-4)**2
             # calculate recale_factor(conductance) times conductance
             tmp['rescaled_cond_nS'] = tmp['cond_nS'] / (1 + tmp['ir-ir_soma'] * tmp['cond_nS'])
+             # delete irrelevant data
+            tmp = tmp[['time [ms]', 'comp', 'rescaled_cond_nS']]
             # annotate
-            tmp['lp_config'] = str(snakemake.wildcards.lp_config)
-            tmp['patt_id'] = int(snakemake.wildcards.patt_id)
-            tmp['norm_power_mW_of_MultiStimulator'] = intensity
-            cond_per_comp.append(tmp)
+            df = tmp.copy()
+            df['condition'] = '_'.join([
+                str(snakemake.wildcards.lp_config),
+                str(snakemake.wildcards.patt_id),
+                str(intensity)
+            ])
+            df = df[['time [ms]', 'condition', 'comp', 'rescaled_cond_nS']]
+            df = df.pivot(
+                    index=['time [ms]', 'condition'], 
+                    columns='comp', 
+                    values='rescaled_cond_nS'
+            ).reset_index()
+            df = df.loc[df['time [ms]'] < 251]
+            df.set_index(['time [ms]'], inplace=True)
+            # integration over 10 ms rolling window
+            window_size = int(10 / interpol_dt_ms)
+            df = df.groupby(['condition']).rolling(window=window_size).sum()
+            df.reset_index().set_index(['condition', 'time [ms]'], inplace=True)
+            df= df * interpol_dt_ms
+            # Downsample to 10ms steps
+            df = df.reset_index().groupby('condition').apply(
+                lambda frame: frame.iloc[window_size::window_size])
+            df = df.drop(
+                columns=['condition']
+            ).reset_index(
+            ).set_index(
+                ['condition', 'time [ms]']
+            ).drop(columns=['level_1'])
+            cond_per_comp.append(df)
 
             # sum rescaled conductance over comps per time step
             tmpsum = pd.DataFrame(tmp.groupby('time [ms]')['rescaled_cond_nS'].sum()).rename(
@@ -124,6 +144,8 @@ for intensity in intensities:
             tmpsum['patt_id'] = int(snakemake.wildcards.patt_id)
             tmpsum['norm_power_mW_of_MultiStimulator'] = intensity
             condsum.append(tmpsum)
+        except RuntimeError:
+            print("RuntimeError at intensity "+str(intensity))
 
 pd.concat(cond_per_comp).to_csv(str(snakemake.output[2]))
 pd.concat(condsum).to_csv(str(snakemake.output[1]))
