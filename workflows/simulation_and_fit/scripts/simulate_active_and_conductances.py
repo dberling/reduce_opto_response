@@ -92,6 +92,7 @@ for intensity in intensities:
                     APC=APC
                 )
             )
+            del APC
             # extract conductances:
             tmp = tmp.drop('v_soma_mV', axis=1)
             tmp = tmp.melt(id_vars=['time [ms]'], var_name='comp')
@@ -102,7 +103,7 @@ for intensity in intensities:
             tmp['cond_nS'] = tmp['dens_cond_SPERcm2'] * 1e9 * tmp['seg_area_um2'] * (1e-4)**2
             # calculate recale_factor(conductance) times conductance
             tmp['rescaled_cond_nS'] = tmp['cond_nS'] / (1 + tmp['ir-ir_soma'] * tmp['cond_nS'])
-             # delete irrelevant data
+            # delete irrelevant data
             tmp = tmp[['time [ms]', 'comp', 'rescaled_cond_nS']]
             # annotate
             df = tmp.copy()
@@ -134,16 +135,22 @@ for intensity in intensities:
                 ['condition', 'time [ms]']
             ).drop(columns=['level_1'])
             cond_per_comp.append(df)
+            del df
 
             # sum rescaled conductance over comps per time step
             tmpsum = pd.DataFrame(tmp.groupby('time [ms]')['rescaled_cond_nS'].sum()).rename(
                 columns=dict(rescaled_cond_nS='rescaled_cond_nS')
             )
+            tmpsum = pd.DataFrame(tmp.groupby('comp')['rescaled_cond_nS'].sum()).rename(
+                columns=dict(rescaled_cond_nS='rescaled_cond_nS')
+            )
+            del tmp
             # annotate
             tmpsum['lp_config'] = str(snakemake.wildcards.lp_config)
             tmpsum['patt_id'] = int(snakemake.wildcards.patt_id)
             tmpsum['norm_power_mW_of_MultiStimulator'] = intensity
             condsum.append(tmpsum)
+            del tmpsum
         except RuntimeError:
             print("RuntimeError at intensity "+str(intensity))
 

@@ -2,22 +2,37 @@ import numpy as np
 
 rule all:
   input: 
-    #expand('workflows/simulation_and_fit/data/APC_active_eff_sum_{cell_id}.csv',
+    #expand('workflows/simulation_and_fit/data/APC_active_approx_eff_sum_{cell_id}.csv',
     #       cell_id=config['cells']
     #),
+    expand('workflows/simulation_and_fit/data/APC_active_eff_sum_{cell_id}.csv',
+           cell_id=config['cells']
+    ),
     expand('workflows/simulation_and_fit/data/APC_full_active_{cell_id}.csv',
            cell_id=config['cells']
     )
+
+rule merge_approx_eff_sum_active:
+  output: 
+    'workflows/simulation_and_fit/data/APC_active_approx_eff_sum_{cell_id}.csv',
+  input: 
+    expand(
+        'workflows/simulation_and_fit/data/active_approx_eff_sum_data/{{cell_id}}/n_locs_{target_n_locs}/APC_for_lp_{lp_config}-id_{patt_id}.csv',
+        lp_config=config['lp_config'],
+        patt_id=np.arange(config['pattern_iterations']),
+        target_n_locs=config['target_n_locs']
+    )
+  script: 'scripts/merge_data.py'
 
 rule merge_eff_sum_active:
   output: 
     'workflows/simulation_and_fit/data/APC_active_eff_sum_{cell_id}.csv',
   input: 
     expand(
-        'workflows/simulation_and_fit/data/active_eff_sum_data/{{cell_id}}/rec_cond_locs_{target_n_locs}/APC_for_lp_{lp_config}-id_{patt_id}.csv',
+        'workflows/simulation_and_fit/data/active_eff_sum_data/{{cell_id}}/APC_for_lp_{lp_config}-id_{patt_id}-cond_scale_fct{cond_scale_fct}.csv',
         lp_config=config['lp_config'],
         patt_id=np.arange(config['pattern_iterations']),
-        target_n_locs=config['target_n_locs']
+        cond_scale_fct=config['cond_scl_fct']
     )
   script: 'scripts/merge_data.py'
 
@@ -32,12 +47,34 @@ rule merge_full_active:
     )
   script: 'scripts/merge_data.py'
 
+rule simulate_approx_eff_sum_active:
+  output: 
+    'workflows/simulation_and_fit/data/active_approx_eff_sum_data/{cell_id}/n_locs_{target_n_locs}/APC_for_lp_{lp_config}-id_{patt_id}.csv'
+  input: 
+    'workflows/simulation_and_fit/data/reduced_comp_reg_model/{cell_id}/n_locs_{target_n_locs}.npy',
+    'workflows/simulation_and_fit/data/cond_scale_factor/{{cell_id}}.npy'
+  params:
+    intensities=config['intensities'],
+  script: 
+    'scripts/simulate_active_approx_eff_sum.py'
+
+rule select_cond_scale_factor:
+  output:
+    'workflows/simulation_and_fit/data/cond_scale_factor/{{cell_id}}.npy',
+    'workflows/simulation_and_fit/data/cond_scale_factor/control_{{cell_id}}.png'
+  input:
+    expand('workflows/simulation_and_fit/data/active_eff_sum_data/{{cell_id}}/APC_for_lp_{lp_config}-id_{patt_id}-cond_scale_fct{cond_scale_fct}.csv',
+        lp_config=config['lp_config'],
+        patt_id=np.arange(config['pattern_iterations']),
+        cond_scale_fct=config['cond_scl_fct']
+    )
+  script: 'scripts/select_cond_scale_factor.py'
+
 rule simulate_eff_sum_active:
   output: 
-    'workflows/simulation_and_fit/data/active_eff_sum_data/{cell_id}/rec_cond_locs_{target_n_locs}/APC_for_lp_{lp_config}-id_{patt_id}.csv'
+    'workflows/simulation_and_fit/data/active_eff_sum_data/{cell_id}/APC_for_lp_{lp_config}-id_{patt_id}-cond_scale_fct{cond_scale_fct}.csv'
   input: 
-    'workflows/simulation_and_fit/data/cond_data/{cell_id}/cond_for_lp_{lp_config}-id_{patt_id}_target_n_locs{target_n_locs}.csv',
-    'workflows/simulation_and_fit/data/comp_weights/cell_{cell_id}__n_locs_{target_n_locs}.npy'
+    'workflows/simulation_and_fit/data/cond_data/{cell_id}/cond_for_lp_{lp_config}-id_{patt_id}.csv'
   params:
     intensities=config['intensities'],
   script: 
@@ -45,14 +82,16 @@ rule simulate_eff_sum_active:
 
 rule fit_reduced_compartment_weights:
   output:
-    'workflows/simulation_and_fit/data/comp_weights/{cell_id}/n_locs_{target_n_locs}.npy'
+    'workflows/simulation_and_fit/data/reduced_comp_reg_model/{cell_id}/n_locs_{target_n_locs}.npy',
+    'workflows/simulation_and_fit/data/reduced_comp_reg_model/{cell_id}/fiterror_n_locs_{target_n_locs}.png'
   input:
-    'workflows/simulation_and_fit/data/comp_locations/{cell_id}/n_locs_{target_n_locs}.npy',
     expand(
-      'workflows/simulation_and_fit/data/cond_data/{{cell_id}}/cond_for_lp_{lp_config}-id_{patt_id}.csv',
+      'workflows/simulation_and_fit/data/cond_per_comp_data/{{cell_id}}/cond_for_lp_{lp_config}-id_{patt_id}.csv',
       lp_config=config['lp_config'],
       patt_id=np.arange(config['pattern_iterations'])
     )
+  script:
+    'scripts/fit_lin_reg_model.py'
 
 rule simulate_full_active:
   output: 
@@ -64,16 +103,10 @@ rule simulate_full_active:
     'workflows/simulation_and_fit/data/light_patterns/lp_{lp_config}-id_{patt_id}.csv',
   params:
     intensities=config['intensities']
+  resources:
+    mem_mb=16384
   script: 
     'scripts/simulate_active_and_conductances.py'
-
-rule distribute_comp_locations:
-  input:
-    'workflows/simulation_and_fit/data/comp_impedances/{cell_id}.npy'
-  output:
-    'workflows/simulation_and_fit/data/comp_locations/{cell_id}/n_locs_{target_n_locs}.npy'
-  script:
-    'scripts/distribute_comp_locs.py'
 
 rule calc_impedances:
   output:

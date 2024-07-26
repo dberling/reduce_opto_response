@@ -24,6 +24,7 @@ intensities: [
   524.288,
   1048.576,
   2097.152]
-lp_config: ['config0', 'config1', 'config2']
+lp_config: ['config0']#, 'config1', 'config2']
 pattern_iterations: 100
-target_n_locs: ['9999'] # '9999' means all comps are recorded.
+target_n_locs: [100] # '9999' means all comps are recorded.
+cond_scl_fct: [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
