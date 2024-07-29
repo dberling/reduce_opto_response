@@ -10,6 +10,8 @@ import ast
 cond = pd.read_csv(str(snakemake.input))
 cond = cond.set_index(['norm_power_mW_of_MultiStimulator'])
 
+intensities = cond.index.get_level_values('norm_power_mW_of_MultiStimulator').unique()
+
 # set up neuron model
 passive_cell_name = str(snakemake.wildcards.cell_id)
 active_cell_name = passive_cell_name[:-10]
@@ -22,8 +24,6 @@ cell = Cell(
 # insert new conductance to 'inject' conductance
 soma = cell.sections[0]
 soma.insert('g_chanrhod')
-
-intensities = np.array(snakemake.params.intensities)
 
 # Define recording variables
 rec_vars = [[],[]]
@@ -71,7 +71,6 @@ for intensity in intensities:
             patt_id = int(snakemake.wildcards.patt_id),
             cond_scale_factor = float(snakemake.wildcards.cond_scale_fct),
             norm_power_mW_of_MultiStimulator = intensity,
-            rec_cond_locs = str(snakemake.wildcards.target_n_locs),
             APC=APC,
             condsum = np.sum(conductance_nS)
         )

@@ -141,9 +141,6 @@ for intensity in intensities:
             tmpsum = pd.DataFrame(tmp.groupby('time [ms]')['rescaled_cond_nS'].sum()).rename(
                 columns=dict(rescaled_cond_nS='rescaled_cond_nS')
             )
-            tmpsum = pd.DataFrame(tmp.groupby('comp')['rescaled_cond_nS'].sum()).rename(
-                columns=dict(rescaled_cond_nS='rescaled_cond_nS')
-            )
             del tmp
             # annotate
             tmpsum['lp_config'] = str(snakemake.wildcards.lp_config)

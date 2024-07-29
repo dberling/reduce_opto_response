@@ -60,5 +60,5 @@ for condition in conditions:
     print(f'Mean Squared Error for condition {condition}: {mse_condition}')
 
 
-with open(str(snakemake.input[0]), "wb") as output_file:
+with open(str(snakemake.output[0]), "wb") as output_file:
     pickle.dump(model, output_file)
