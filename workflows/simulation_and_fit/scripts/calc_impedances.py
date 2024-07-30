@@ -1,7 +1,5 @@
-from neurostim.cell import Cell
-from neurostim.analysis import quick_sim_setup
 from neurostim.utils import convert_polar_to_cartesian_xz
-from neurostim.analysis import get_AP_count
+from neurostim.analysis import get_AP_count, quick_sim_setup
 import numpy as np
 import pandas as pd
 from neuron import h
@@ -21,6 +19,7 @@ simcontrol = quick_sim_setup(
 )
 secs = simcontrol.cell.sections
 allsegment_locs = []
+allsegment_coords_area = []
 for sec in secs:
     for seg in sec:
         allsegment_locs.append(
@@ -29,6 +28,7 @@ for sec in secs:
                 x=seg.x
             )
         )
+        allsegment_coords_area.append([seg.x_chanrhod, seg.y_chanrhod, seg.z_chanrhod, seg.area()])
 # set up greenstree for impedance calculations        
 greens_tree = simcontrol.cell.ph_tree.__copy__(new_tree=GreensTree())
 
@@ -48,9 +48,9 @@ greens_tree.setImpedance(ft.s)
 
 # record input resistances
 data = []
-for loc in allsegment_locs:
+for loc,coords in zip(allsegment_locs, allsegment_coords_area):
     # input resistance:
     ir = greens_tree.calcZF(loc, loc)[ft.ind_0s].real
-    data.append([loc['node'], loc['x'], ir])
+    data.append([loc['node'], loc['x'], ir, *coords])
 
 np.save(str(snakemake.output), data)
