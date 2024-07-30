@@ -28,7 +28,13 @@ for sec in secs:
                 x=seg.x
             )
         )
-        allsegment_coords_area.append([seg.x_chanrhod, seg.y_chanrhod, seg.z_chanrhod, seg.area()])
+        allsegment_coords_area.append([
+            seg.x_chanrhod, 
+            seg.y_chanrhod, 
+            seg.z_chanrhod, 
+            seg.area(),
+            seg.channel_density_chanrhod
+        ])
 # set up greenstree for impedance calculations        
 greens_tree = simcontrol.cell.ph_tree.__copy__(new_tree=GreensTree())
 
