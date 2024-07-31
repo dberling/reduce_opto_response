@@ -1,0 +1,75 @@
+import numpy as np
+
+rule all:
+  input: 
+    expand('workflows/python_conductance/data/APC_effsum_active_{cell_id}.csv',
+           cell_id=config['cells']
+    ),
+    expand('workflows/python_conductance/data/APC_full_active_{cell_id}.csv',
+           cell_id=config['cells']
+    )
+
+rule merge_effsum_active:
+  output: 
+    'workflows/python_conductance/data/APC_effsum_active_{cell_id}.csv',
+  input: 
+    expand(
+	'workflows/python_conductance/data/effsum_active_data/{{cell_id}}/APC_for_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}-cond_scale_fct{cond_scale_fct}.csv',
+        lp_config=config['lp_config'],
+        patt_id=np.arange(config['pattern_iterations']),
+        norm_power=config['norm_power'],
+        cond_scale_fct=config['cond_scl_fct']
+    )
+  script: 
+    'scripts/merge_data.py'
+
+rule merge_full_active:
+  output: 
+    'workflows/python_conductance/data/APC_full_active_{cell_id}.csv'
+  input: 
+    expand(
+        'workflows/python_conductance/data/full_active_data/{{cell_id}}/APC_for_lp_{lp_config}-id_{patt_id}.csv',
+        lp_config=config['lp_config'],
+        patt_id=np.arange(config['pattern_iterations'])
+    )
+  script: 
+    'scripts/merge_data.py'
+
+rule simulate_effsum_active:
+  output: 
+    'workflows/python_conductance/data/effsum_active_data/{cell_id}/APC_for_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}-cond_scale_fct{cond_scale_fct}.csv'
+  input: 
+    'workflows/python_conductance/data/cond_data/{cell_id}/lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}.npy'
+  script: 
+    'scripts/simulate_effsum_active.py'
+
+rule calculate_effsum_conductance:
+  output:
+    'workflows/python_conductance/data/cond_data/{cell_id}/lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}.npy'
+  input:
+    'workflows/python_conductance/data/light_patterns/lp_{lp_config}-id_{patt_id}.csv',
+    'workflows/python_conductance/data/comp_impedances/{cell_id}.npy'
+  script:
+    'scripts/calculate_effsum_conductance.py'
+
+rule simulate_full_active:
+  output: 
+    'workflows/python_conductance/data/full_active_data/{cell_id}/APC_for_lp_{lp_config}-id_{patt_id}.csv'
+  input: 
+    'workflows/python_conductance/data/light_patterns/lp_{lp_config}-id_{patt_id}.csv',
+  params:
+    norm_power=config['norm_power']
+  script: 
+    'scripts/simulate_full_active.py'
+
+rule calc_impedances:
+  output:
+    'workflows/python_conductance/data/comp_impedances/{cell_id}.npy'
+  script:
+    'scripts/calc_impedances.py'
+
+rule gen_light_patterns:
+  output: 
+    'workflows/python_conductance/data/light_patterns/lp_{lp_config}-id_{patt_id}.csv'
+  script:
+    'scripts/gen_light_patterns.py'
