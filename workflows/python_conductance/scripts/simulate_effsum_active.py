@@ -10,7 +10,7 @@ temp_protocol = dict(
     delay_ms = 1,
     total_rec_time_ms = 250
 )
-interpolt_dt_ms = 0.1
+interpol_dt_ms = 0.1
 
 # set up neuron model
 passive_cell_name = str(snakemake.wildcards.cell_id)
@@ -32,48 +32,61 @@ rec_vars = [[],[]]
 APCs = []
 # define/load driving stimulus
 conductance_nS = np.load(str(snakemake.input))
-times_ms = np.arange(0,temp_protocol['total_rec_time_ms'],interpol_dt_ms)
-
-# scale conductance according to general scale factor
-conductance_nS *= float(snakemake.wildcards.cond_scale_fct)
-
-# driving stimulus
-t = h.Vector(time_ms)
-y = h.Vector(conductance_nS)
-
-# rec variables
-rec_time = h.Vector().record(h._ref_t)
-rec_v = h.Vector().record(soma(0.5)._ref_v)
-
-# run simulation with injected conductance
-h.load_file('stdrun.hoc')
-
-# play the stimulus into soma(0.5)'s ina
-# the last True means to interpolate; it's not the default, but unless
-# you know what you're doing, you probably want to pass True there
-y.play(soma(0.5)._ref_gcat2_g_chanrhod, t, True)
-
-h.v_init, h.tstop= -70, temp_protocol['total_rec_time_ms']
-h.run()
-
-# measure APC
-APC = get_AP_count(
-    df=pd.DataFrame(
-        columns=['time [ms]','V_soma(0.5)'],
-        data = np.array([rec_time, rec_v]).T
-    ),
-    interpol_dt_ms=interpol_dt_ms,
-    t_on_ms=temp_protocol['delay_ms'],
-    AP_threshold_mV=0
-)
-APCs.append(
-    dict(
-        lp_config = str(snakemake.wildcards.lp_config),
-        patt_id = int(snakemake.wildcards.patt_id),
-        cond_scale_factor = float(snakemake.wildcards.cond_scale_fct),
-        norm_power_mW_of_MultiStimulator = float(snakemake.wildcards.norm_power),
-        APC=APC,
-        condsum = np.sum(conductance_nS)
+if (conductance_nS.shape == ()) and np.isnan(conductance_nS) == True:
+    # calculation of conductance was rejected. Save dummy file.
+    APCs.append(
+        dict(
+            lp_config = str(snakemake.wildcards.lp_config),
+            patt_id = int(snakemake.wildcards.patt_id),
+            cond_scale_factor = float(snakemake.wildcards.cond_scale_fct),
+            norm_power_mW_of_MultiStimulator = float(snakemake.wildcards.norm_power),
+            APC=np.nan
+        )
     )
-)
-pd.DataFrame(APCs).to_csv(str(snakemake.output))
+    pd.DataFrame(APCs).to_csv(str(snakemake.output))
+else:
+    # proceed with simulation
+    time_ms = np.arange(0,temp_protocol['total_rec_time_ms'],interpol_dt_ms)
+
+    # scale conductance according to general scale factor
+    conductance_nS *= float(snakemake.wildcards.cond_scale_fct)
+
+    # driving stimulus
+    t = h.Vector(time_ms)
+    y = h.Vector(conductance_nS)
+
+    # rec variables
+    rec_time = h.Vector().record(h._ref_t)
+    rec_v = h.Vector().record(soma(0.5)._ref_v)
+
+    # run simulation with injected conductance
+    h.load_file('stdrun.hoc')
+
+    # play the stimulus into soma(0.5)'s ina
+    # the last True means to interpolate; it's not the default, but unless
+    # you know what you're doing, you probably want to pass True there
+    y.play(soma(0.5)._ref_gcat2_g_chanrhod, t, True)
+
+    h.v_init, h.tstop= -70, temp_protocol['total_rec_time_ms']
+    h.run()
+
+    # measure APC
+    APC = get_AP_count(
+        df=pd.DataFrame(
+            columns=['time [ms]','V_soma(0.5)'],
+            data = np.array([rec_time, rec_v]).T
+        ),
+        interpol_dt_ms=interpol_dt_ms,
+        t_on_ms=temp_protocol['delay_ms'],
+        AP_threshold_mV=0
+    )
+    APCs.append(
+        dict(
+            lp_config = str(snakemake.wildcards.lp_config),
+            patt_id = int(snakemake.wildcards.patt_id),
+            cond_scale_factor = float(snakemake.wildcards.cond_scale_fct),
+            norm_power_mW_of_MultiStimulator = float(snakemake.wildcards.norm_power),
+            APC=APC
+        )
+    )
+    pd.DataFrame(APCs).to_csv(str(snakemake.output))
