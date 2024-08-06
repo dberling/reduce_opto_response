@@ -36,6 +36,25 @@ rule merge_full_active:
   script: 
     'scripts/merge_data.py'
 
+rule evaluate_cond_scale_factor_model_performance:
+  output:
+    'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}.csv'
+  input:
+    expand(
+        'workflows/python_conductance/data/full_active_data/{{cell_id}}/APC_for_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}.csv',
+        lp_config=config['lp_config'],
+        patt_id=np.arange(config['pattern_iterations']),
+        norm_power=config['norm_power']
+    ),
+    expand(
+	'workflows/python_conductance/data/effsum_active_data/{{cell_id}}/APC_for_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}-cond_scale_fct{{cond_scale_fct}}.csv',
+        lp_config=config['lp_config'],
+        patt_id=np.arange(config['pattern_iterations']),
+        norm_power=config['norm_power']
+    )
+  script: 
+    'scripts/evaluate_model_fit.py'
+
 rule simulate_effsum_active:
   output: 
     'workflows/python_conductance/data/effsum_active_data/{cell_id}/APC_for_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}-cond_scale_fct{cond_scale_fct}.csv'
