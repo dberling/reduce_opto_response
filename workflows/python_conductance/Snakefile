@@ -5,12 +5,6 @@ rule all:
     expand('workflows/python_conductance/data/APC_effsum_active_{cell_id}.csv',
            cell_id=config['cells']
     ),
-    #expand('workflows/python_conductance/data/cond_data/{cell_id}/lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}.npy',
-    #       cell_id=config['cells'],
-    #       lp_config=config['lp_config'],
-    #       patt_id=np.arange(config['pattern_iterations']),
-    #       norm_power=config['norm_power']
-    #),
     expand('workflows/python_conductance/data/APC_full_active_{cell_id}.csv',
            cell_id=config['cells']
     )
