@@ -6,11 +6,10 @@ import numpy as np
 import pandas as pd
 import ast
 
-temp_protocol = dict(
-    delay_ms = 1,
-    total_rec_time_ms = 250
-)
-interpol_dt_ms = 0.1
+with open(str(snakemake.input[1]), 'rb') as handle:
+    temp_protocol = pickle.load(handle)
+
+time_ms = np.arange(0,temp_protocol['total_rec_time_ms'],temp_protocol['interpol_dt_ms'])
 
 # set up neuron model
 passive_cell_name = str(snakemake.wildcards.cell_id)
@@ -31,7 +30,7 @@ rec_vars = [[],[]]
 
 APCs = []
 # define/load driving stimulus
-conductance_nS = np.load(str(snakemake.input))
+conductance_nS = np.load(str(snakemake.input[0]))
 if (conductance_nS.shape == ()) and np.isnan(conductance_nS) == True:
     # calculation of conductance was rejected. Save dummy file.
     APCs.append(
@@ -46,8 +45,6 @@ if (conductance_nS.shape == ()) and np.isnan(conductance_nS) == True:
     pd.DataFrame(APCs).to_csv(str(snakemake.output))
 else:
     # proceed with simulation
-    time_ms = np.arange(0,temp_protocol['total_rec_time_ms'],interpol_dt_ms)
-
     # scale conductance according to general scale factor
     conductance_nS *= float(snakemake.wildcards.cond_scale_fct)
 
@@ -67,7 +64,8 @@ else:
     # you know what you're doing, you probably want to pass True there
     y.play(soma(0.5)._ref_gcat2_g_chanrhod, t, True)
 
-    h.v_init, h.tstop= -70, temp_protocol['total_rec_time_ms']
+    # h.v_init, h.tstop= -70, temp_protocol['total_rec_time_ms']
+    h.v_init, h.tstop= -70, 201
     h.run()
 
     # measure APC
@@ -76,9 +74,9 @@ else:
             columns=['time [ms]','V_soma(0.5)'],
             data = np.array([rec_time, rec_v]).T
         ),
-        interpol_dt_ms=interpol_dt_ms,
+        interpol_dt_ms=temp_protocol['interpol_dt_ms'],
         t_on_ms=temp_protocol['delay_ms'],
-        AP_threshold_mV=0
+        AP_threshold_mV=-20
     )
     APCs.append(
         dict(

@@ -40,34 +40,34 @@ rec_vars[0].append('v_soma_mV')
 rec_vars[1].append(simcontrol.cell.model.soma_sec(0.5)._ref_v)
 
 APCs = []
-for norm_power in np.array(snakemake.params.norm_power):
-        try:
-            tmp = simcontrol.run(
-                temp_protocol=temp_protocol,
-                stim_location=(0, 0, 0),
-                stim_intensity_mWPERmm2=None,                    
-                rec_vars=rec_vars,
-                interpol_dt_ms=interpol_dt_ms,
-                norm_power_mW_of_MultiStimulator=norm_power
-            )
-            # measure APC
-            v_soma = tmp[['time [ms]', 'v_soma_mV']]
-            v_soma_until_stim_period_stops = v_soma.loc[v_soma['time [ms]']<=temp_protocol['duration_ms']+temp_protocol['delay_ms']]
-            APC = get_AP_count(
-                df=v_soma_until_stim_period_stops,
-                interpol_dt_ms=0.1,
-                t_on_ms=1, AP_threshold_mV=0, apply_to="v_soma_mV"
-            )
-            APCs.append(
-                dict(
-                    lp_config = str(snakemake.wildcards.lp_config),
-                    patt_id = int(snakemake.wildcards.patt_id),
-                    norm_power_mW_of_MultiStimulator = norm_power,
-                    APC=APC
-                )
-            )
-            del APC
-        except RuntimeError:
-            print("RuntimeError at norm_power" +str(norm_power))
+norm_power = float(snakemake.wildcards.norm_power)
+try:
+    tmp = simcontrol.run(
+        temp_protocol=temp_protocol,
+        stim_location=(0, 0, 0),
+        stim_intensity_mWPERmm2=None,                    
+        rec_vars=rec_vars,
+        interpol_dt_ms=interpol_dt_ms,
+        norm_power_mW_of_MultiStimulator=norm_power
+    )
+    # measure APC
+    v_soma = tmp[['time [ms]', 'v_soma_mV']]
+    v_soma_until_stim_period_stops = v_soma.loc[v_soma['time [ms]']<=temp_protocol['duration_ms']+temp_protocol['delay_ms']]
+    APC = get_AP_count(
+        df=v_soma_until_stim_period_stops,
+        interpol_dt_ms=0.1,
+        t_on_ms=1, AP_threshold_mV=-20, apply_to="v_soma_mV"
+    )
+    APCs.append(
+        dict(
+            lp_config = str(snakemake.wildcards.lp_config),
+            patt_id = int(snakemake.wildcards.patt_id),
+            norm_power_mW_of_MultiStimulator = norm_power,
+            APC=APC
+        )
+    )
+    del APC
+except RuntimeError:
+    print("RuntimeError at norm_power" +str(norm_power))
 
 pd.DataFrame(APCs).to_csv(str(snakemake.output))
