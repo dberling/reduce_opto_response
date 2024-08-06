@@ -42,6 +42,8 @@ rule simulate_effsum_active:
   input: 
     'workflows/python_conductance/data/cond_data/{cell_id}/lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}.npy',
     'workflows/python_conductance/data/cond_data/{cell_id}/temp_protocol__lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}.pickle'
+  params:
+    AP_threshold_mV = -20
   script: 
     'scripts/simulate_effsum_active.py'
 
@@ -60,6 +62,8 @@ rule simulate_full_active:
     'workflows/python_conductance/data/full_active_data/{cell_id}/APC_for_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}.csv'
   input: 
     'workflows/python_conductance/data/light_patterns/lp_{lp_config}-id_{patt_id}.csv',
+  params:
+    AP_threshold_mV = -20
   script: 
     'scripts/simulate_full_active.py'
 

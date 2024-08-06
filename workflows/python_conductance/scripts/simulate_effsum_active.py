@@ -68,6 +68,12 @@ else:
     h.v_init, h.tstop= -70, 201
     h.run()
 
+    if int(snakemake.wildcards.patt_id) % 10 == 0:
+        fig, ax = plt.subplots()
+        ax.plot(np.array(rec_time), np.array(rec_v), label='soma vm [mV]')
+        ax.axhline(y=float(snakemake.params.AP_threshold_mV), color='red', label='AP_threshold')
+        ax.legend()
+        fig.savefig(str(snakemake.output)[:-4]+'_controlplot.png')
     # measure APC
     APC = get_AP_count(
         df=pd.DataFrame(
@@ -76,7 +82,7 @@ else:
         ),
         interpol_dt_ms=temp_protocol['interpol_dt_ms'],
         t_on_ms=temp_protocol['delay_ms'],
-        AP_threshold_mV=-20
+        AP_threshold_mV=float(snakemake.params.AP_threshold_mV)
     )
     APCs.append(
         dict(

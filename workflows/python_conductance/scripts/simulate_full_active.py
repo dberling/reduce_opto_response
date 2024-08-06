@@ -50,13 +50,20 @@ try:
         interpol_dt_ms=interpol_dt_ms,
         norm_power_mW_of_MultiStimulator=norm_power
     )
+    if int(snakemake.wildcards.patt_id) % 10 == 0:
+        fig, ax = plt.subplots()
+        tmp.plot(x='time [ms]', y='v_soma_mV', ax=ax)
+        ax.axhline(y=float(snakemake.params.AP_threshold_mV), color='red', label='AP_threshold')
+        ax.legend()
+        fig.savefig(str(snakemake.output)[:-4]+'_controlplot.png')
+
     # measure APC
     v_soma = tmp[['time [ms]', 'v_soma_mV']]
     v_soma_until_stim_period_stops = v_soma.loc[v_soma['time [ms]']<=temp_protocol['duration_ms']+temp_protocol['delay_ms']]
     APC = get_AP_count(
         df=v_soma_until_stim_period_stops,
         interpol_dt_ms=0.1,
-        t_on_ms=1, AP_threshold_mV=-20, apply_to="v_soma_mV"
+        t_on_ms=1, AP_threshold_mV=float(snakemake.params.AP_threshold_mV), apply_to="v_soma_mV"
     )
     APCs.append(
         dict(
