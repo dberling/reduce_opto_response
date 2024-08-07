@@ -34,4 +34,4 @@ norm_power: [
 ]
 lp_config: ['config0', 'config1', 'config2']
 pattern_iterations: 100
-cond_scl_fct: [0.5]
+cond_scl_fct: [0.4, 0.5]
