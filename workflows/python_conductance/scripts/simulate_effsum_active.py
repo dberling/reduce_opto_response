@@ -5,6 +5,8 @@ from neurostim.analysis import get_AP_count
 import numpy as np
 import pandas as pd
 import ast
+import matplotlib.pyplot as plt
+from scipy.signal import find_peaks
 
 with open(str(snakemake.input[1]), 'rb') as handle:
     temp_protocol = pickle.load(handle)
@@ -68,22 +70,11 @@ else:
     h.v_init, h.tstop= -70, 201
     h.run()
 
-    if int(snakemake.wildcards.patt_id) % 10 == 0:
-        fig, ax = plt.subplots()
-        ax.plot(np.array(rec_time), np.array(rec_v), label='soma vm [mV]')
-        ax.axhline(y=float(snakemake.params.AP_threshold_mV), color='red', label='AP_threshold')
-        ax.legend()
-        fig.savefig(str(snakemake.output)[:-4]+'_controlplot.png')
     # measure APC
-    APC = get_AP_count(
-        df=pd.DataFrame(
-            columns=['time [ms]','V_soma(0.5)'],
-            data = np.array([rec_time, rec_v]).T
-        ),
-        interpol_dt_ms=temp_protocol['interpol_dt_ms'],
-        t_on_ms=temp_protocol['delay_ms'],
-        AP_threshold_mV=float(snakemake.params.AP_threshold_mV)
-    )
+    x = np.array(rec_time)
+    y = np.array(rec_v)
+    peaks, properties = find_peaks(y, height=-20, prominence=10)
+    APC = len(peaks)
     APCs.append(
         dict(
             lp_config = str(snakemake.wildcards.lp_config),
@@ -94,3 +85,9 @@ else:
         )
     )
     pd.DataFrame(APCs).to_csv(str(snakemake.output))
+
+    if int(snakemake.wildcards.patt_id) % 10 == 0:
+        plt.plot(x, y)
+        plt.plot(x[peaks], y[peaks], 'ro', label='Detected Peaks')
+        plt.legend()
+        plt.savefig(str(snakemake.output)[:-4]+'_controlplot.png')

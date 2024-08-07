@@ -5,6 +5,8 @@ import pandas as pd
 from neuron import h
 import ast
 import re
+import matplotlib.pyplot as plt
+from scipy.signal import find_peaks
 
 passive_cell_name = str(snakemake.wildcards.cell_id)
 active_cell_name = passive_cell_name[:-10]
@@ -50,21 +52,13 @@ try:
         interpol_dt_ms=interpol_dt_ms,
         norm_power_mW_of_MultiStimulator=norm_power
     )
-    if int(snakemake.wildcards.patt_id) % 10 == 0:
-        fig, ax = plt.subplots()
-        tmp.plot(x='time [ms]', y='v_soma_mV', ax=ax)
-        ax.axhline(y=float(snakemake.params.AP_threshold_mV), color='red', label='AP_threshold')
-        ax.legend()
-        fig.savefig(str(snakemake.output)[:-4]+'_controlplot.png')
-
     # measure APC
     v_soma = tmp[['time [ms]', 'v_soma_mV']]
     v_soma_until_stim_period_stops = v_soma.loc[v_soma['time [ms]']<=temp_protocol['duration_ms']+temp_protocol['delay_ms']]
-    APC = get_AP_count(
-        df=v_soma_until_stim_period_stops,
-        interpol_dt_ms=0.1,
-        t_on_ms=1, AP_threshold_mV=float(snakemake.params.AP_threshold_mV), apply_to="v_soma_mV"
-    )
+    x = tmp['time [ms]']
+    y = tmp['v_soma_mV']
+    peaks, properties = find_peaks(y, height=-20, prominence=10)
+    APC = len(peaks)
     APCs.append(
         dict(
             lp_config = str(snakemake.wildcards.lp_config),
@@ -73,6 +67,13 @@ try:
             APC=APC
         )
     )
+
+    if int(snakemake.wildcards.patt_id) % 10 == 0:
+        plt.plot(x, y)
+        plt.plot(x[peaks], y[peaks], 'ro', label='Detected Peaks')
+        plt.legend()
+        plt.savefig(str(snakemake.output)[:-4]+'_controlplot.png')
+
     del APC
 except RuntimeError:
     print("RuntimeError at norm_power" +str(norm_power))
