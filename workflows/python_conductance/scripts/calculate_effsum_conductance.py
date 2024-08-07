@@ -34,3 +34,7 @@ else:
     # save temp_protocol
     with open(str(snakemake.output[1]), 'wb') as handle:
         pickle.dump(temp_protocol, handle)
+
+# save conductance profile for all compartments:
+# downsample to 1ms before
+np.save(str(snakemake.output[2]), rescaled_comp_cond_nS[::int(1/interpol_dt_ms),:])
