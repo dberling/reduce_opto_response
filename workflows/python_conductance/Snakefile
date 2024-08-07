@@ -7,6 +7,26 @@ rule all:
     ),
     expand('workflows/python_conductance/data/APC_full_active_{cell_id}.csv',
            cell_id=config['cells']
+    ),
+    expand(
+        'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_until_full_max.csv',
+        cell_id=config['cells'],
+        cond_scale_factor=config['cond_scl_fct']
+    ),
+    expand(
+        'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_exclude_effsum_dpb.csv',
+        cell_id=config['cells'],
+        cond_scale_factor=config['cond_scl_fct']
+    ),
+    expand(
+        'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_norm_pwr_at_max_full.csv',
+        cell_id=config['cells'],
+        cond_scale_factor=config['cond_scl_fct']
+    ),
+    expand(
+        'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_norm_pwr_at_max_effsum.csv',
+        cell_id=config['cells'],
+        cond_scale_factor=config['cond_scl_fct']
     )
 
 rule fit_reduced_compartment_weights:
@@ -55,7 +75,10 @@ rule merge_full_active:
 
 rule evaluate_cond_scale_factor_model_performance:
   output:
-    'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}.csv'
+    'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_until_full_max.csv',
+    'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_exclude_effsum_dpb.csv',
+    'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_norm_pwr_at_max_full.csv',
+    'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_norm_pwr_at_max_effsum.csv'
   input:
     expand(
         'workflows/python_conductance/data/full_active_data/{{cell_id}}/APC_for_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}.csv',
@@ -64,7 +87,7 @@ rule evaluate_cond_scale_factor_model_performance:
         norm_power=config['norm_power']
     ),
     expand(
-	'workflows/python_conductance/data/effsum_active_data/{{cell_id}}/APC_for_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}-cond_scale_fct{{cond_scale_fct}}.csv',
+	'workflows/python_conductance/data/effsum_active_data/{{cell_id}}/APC_for_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}-cond_scale_fct{{cond_scale_factor}}.csv',
         lp_config=config['lp_config'],
         patt_id=np.arange(config['pattern_iterations']),
         norm_power=config['norm_power']
@@ -78,8 +101,6 @@ rule simulate_effsum_active:
   input: 
     'workflows/python_conductance/data/cond_data/{cell_id}/lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}.npy',
     'workflows/python_conductance/data/cond_data/{cell_id}/temp_protocol__lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}.pickle'
-  params:
-    AP_threshold_mV = -20
   script: 
     'scripts/simulate_effsum_active.py'
 
@@ -99,8 +120,6 @@ rule simulate_full_active:
     'workflows/python_conductance/data/full_active_data/{cell_id}/APC_for_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}.csv'
   input: 
     'workflows/python_conductance/data/light_patterns/lp_{lp_config}-id_{patt_id}.csv',
-  params:
-    AP_threshold_mV = -20
   script: 
     'scripts/simulate_full_active.py'
 

@@ -66,15 +66,28 @@ df_effsum = pd.concat([pd.read_csv(fname, index_col=0) for fname in list(snakema
 df_effsum = df_effsum.sort_values(
     by=['lp_config', 'patt_id', 'norm_power_mW_of_MultiStimulator']) 
 
-eval_model_performance(df_full, df_effsum, mode='until_full_max')
-eval_model_performance(df_full, df_effsum, mode='exclude_effsum_dpb')
-
 mode = 'until_full_max'
-output = snakemake.output
 adict = dict()
 for label, result in zip(
     ['mean[APC_dev]', 'mean[rel_APC_dev]', 'sqrt(mean[APC_dev**2])', 'sqrt(mean[rel_APC_dev**2])'],
     eval_model_performance(df_full, df_effsum, mode=mode)
 ):
     adict[label] = result
-pd.DataFrame(adict).to_csv(str(output))
+pd.DataFrame(adict).to_csv(str(snakemake.output[0]))
+
+mode = 'exclude_effsum_dpb'
+adict = dict()
+for label, result in zip(
+    ['mean[APC_dev]', 'mean[rel_APC_dev]', 'sqrt(mean[APC_dev**2])', 'sqrt(mean[rel_APC_dev**2])'],
+    eval_model_performance(df_full, df_effsum, mode=mode)
+):
+    adict[label] = result
+pd.DataFrame(adict).to_csv(str(snakemake.output[1]))
+
+for df, label, output in zip([df_full, df_effsum], [str(snakemake.output[2]), str(snakemake.output[3])]):
+    np.save(
+        output, 
+        np.array(
+            df.groupby(['lp_config', 'patt_id']).apply(lambda x: x.loc[x.APC == x.APC.max()].norm_power_mW_of_MultiStimulator).mean()
+        )
+    )
