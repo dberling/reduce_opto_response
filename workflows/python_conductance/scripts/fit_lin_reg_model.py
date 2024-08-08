@@ -6,13 +6,14 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
 import pickle
+import ast
 
-conds_per_condition = [np.load((fname) for fname in list(snakemake.input[0])]
+conds_per_condition = [np.load(fname) for fname in ast.literal_eval(str(snakemake.input[:-1]))]
 sum_per_condition = [conds.sum(axis=1) for conds in conds_per_condition]
 
 times = np.arange(0,250,1)
 conditions = np.arange(0,len(conds_per_condition))
-comps = ['_'.join([str(int(name)), str(x)]) for (name, x) in np.load(str(snakemake.input[1]))[:,:2]]
+comps = ['_'.join([str(int(name)), str(x)]) for (name, x) in np.load(str(snakemake.input[-1]))[:,:2]]
 conds_per_condition = [np.array([times for comp in comps]) for condition in conditions]
 
 dfs = []

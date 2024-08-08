@@ -8,26 +8,57 @@ rule all:
     expand('workflows/python_conductance/data/APC_full_active_{cell_id}.csv',
            cell_id=config['cells']
     ),
-    expand(
-        'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_until_full_max.csv',
-        cell_id=config['cells'],
-        cond_scale_factor=config['cond_scl_fct']
+    #expand(
+    #    'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_until_full_max.csv',
+    #    cell_id=config['cells'],
+    #    cond_scale_factor=config['cond_scl_fct']
+    #),
+    #expand(
+    #    'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_exclude_effsum_dpb.csv',
+    #    cell_id=config['cells'],
+    #    cond_scale_factor=config['cond_scl_fct']
+    #),
+    #expand(
+    #    'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_norm_pwr_at_max_full.csv',
+    #    cell_id=config['cells'],
+    #    cond_scale_factor=config['cond_scl_fct']
+    #),
+    #expand(
+    #    'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_norm_pwr_at_max_effsum.csv',
+    #    cell_id=config['cells'],
+    #    cond_scale_factor=config['cond_scl_fct']
+    #)
+    expand('workflows/python_conductance/data/reduced_comp_reg_model/{cell_id}_model.pickle',
+           cell_id=config['cells']
     ),
-    expand(
-        'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_exclude_effsum_dpb.csv',
-        cell_id=config['cells'],
-        cond_scale_factor=config['cond_scl_fct']
+    expand('workflows/python_conductance/data/reduced_comp_reg_model/{cell_id}_fiterror.png',
+           cell_id=config['cells']
     ),
-    expand(
-        'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_norm_pwr_at_max_full.csv',
-        cell_id=config['cells'],
-        cond_scale_factor=config['cond_scl_fct']
-    ),
-    expand(
-        'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_norm_pwr_at_max_effsum.csv',
-        cell_id=config['cells'],
-        cond_scale_factor=config['cond_scl_fct']
+    expand('workflows/python_conductance/data/reduced_comp_reg_model/{cell_id}_top_compartments.npy',
+           cell_id=config['cells']
     )
+
+rule merge_soma_only_active:
+  output: 
+    'workflows/python_conductance/data/APC_soma_only_active_{cell_id}.csv',
+  input: 
+    expand(
+        'workflows/python_conductance/data/soma_only_active_data/{{cell_id}}/APC_for_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}.csv',
+        lp_config=config['lp_config'],
+        patt_id=np.arange(config['pattern_iterations']),
+        norm_power=config['norm_power']
+    )
+  script: 
+    'scripts/merge_data.py'
+
+rule simulate_soma_only_active:
+  output: 
+    'workflows/python_conductance/data/soma_only_active_data/{cell_id}/APC_for_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}.csv'
+  input: 
+    'workflows/python_conductance/data/cond_data/{cell_id}/lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}.npy',
+    'workflows/python_conductance/data/cond_data/{cell_id}/temp_protocol__lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}.pickle'
+  script: 
+    'workflows/python_conductance/scripts/simulate_only_soma.py'
 
 rule fit_reduced_compartment_weights:
   output:
@@ -80,14 +111,10 @@ rule evaluate_cond_scale_factor_model_performance:
     'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_norm_pwr_at_max_full.csv',
     'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_norm_pwr_at_max_effsum.csv'
   input:
-    expand(
+    expand([
         'workflows/python_conductance/data/full_active_data/{{cell_id}}/APC_for_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}.csv',
-        lp_config=config['lp_config'],
-        patt_id=np.arange(config['pattern_iterations']),
-        norm_power=config['norm_power']
-    ),
-    expand(
-	'workflows/python_conductance/data/effsum_active_data/{{cell_id}}/APC_for_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}-cond_scale_fct{{cond_scale_factor}}.csv',
+	'workflows/python_conductance/data/effsum_active_data/{{cell_id}}/APC_for_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}-cond_scale_fct{{cond_scale_factor}}.csv'
+        ],
         lp_config=config['lp_config'],
         patt_id=np.arange(config['pattern_iterations']),
         norm_power=config['norm_power']
@@ -134,3 +161,9 @@ rule gen_light_patterns:
     'workflows/python_conductance/data/light_patterns/lp_{lp_config}-id_{patt_id}.csv'
   script:
     'scripts/gen_light_patterns.py'
+
+rule gen_single_light_patterns:
+  output: 
+    'workflows/python_conductance/data/light_patterns/slp__x{x_coord}__y{y_coord}.csv'
+  script:
+    'workflows/python_conductance/scripts/gen_single_light_patterns.py'

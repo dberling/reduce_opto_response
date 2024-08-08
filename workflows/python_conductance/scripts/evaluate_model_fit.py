@@ -59,10 +59,10 @@ def eval_model_performance(df_full, df_effsum, mode='until_full_max'):
                     APC_dev_rel_to_full.append(abs(APC_full-APC_effsum) / norm_APC)
     return [np.mean(APC_deviation), np.mean(APC_dev_rel_to_full), np.sqrt(np.mean(np.array(APC_deviation)**2)), np.sqrt(np.mean(np.array(APC_dev_rel_to_full)**2))]
 
-df_full = pd.concat([pd.read_csv(fname, index_col=0) for fname in list(snakemake.input[0])])
+df_full = pd.concat([pd.read_csv(fname[0], index_col=0) for fname in list(snakemake.input)])
 df_full = df_full.sort_values(
     by=['lp_config', 'patt_id', 'norm_power_mW_of_MultiStimulator']) 
-df_effsum = pd.concat([pd.read_csv(fname, index_col=0) for fname in list(snakemake.input[1])])
+df_effsum = pd.concat([pd.read_csv(fname[1], index_col=0) for fname in list(snakemake.input)])
 df_effsum = df_effsum.sort_values(
     by=['lp_config', 'patt_id', 'norm_power_mW_of_MultiStimulator']) 
 
