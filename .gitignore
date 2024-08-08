@@ -161,3 +161,19 @@ cython_debug/
 
 # Snakemake workflow data files
 workflows/rescale_factors/rank_compartments/
+workflows/advanced_light_patterns/data/
+workflows/simulation_and_fit/data/
+workflows/python_conductance/data/
+workflows/test_effective_conductance_sum/data/
+thresh_intensity/
+
+# Other git repos
+NEAST_models/
+neatcache/
+NEAT-2/
+simneurostim/
+nest-simulator-3.6*
+nestml/
+
+# slurm output
+slurm-*.out
