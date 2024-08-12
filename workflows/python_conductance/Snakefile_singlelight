@@ -1,0 +1,134 @@
+import numpy as np
+xys = np.arange(0, config['xy_max'], config['dxy'])
+
+rule all:
+  input: 
+    expand('workflows/python_conductance/data_slp/APC_soma_only_1scale_active_{cell_id}-cond_scale_fct{cond_scale_fct}.csv',
+           cell_id=config['cells'],
+           cond_scale_fct=[0.05]
+    ),
+    expand('workflows/python_conductance/data_slp/APC_soma_only_active_{cell_id}-cond_scale_fct{cond_scale_fct}.csv',
+           cell_id=config['cells'],
+           cond_scale_fct=[0.3]
+    ),
+    expand('workflows/python_conductance/data_slp/APC_effsum_active_{cell_id}.csv',
+           cell_id=config['cells']
+    ),
+    expand('workflows/python_conductance/data_slp/APC_full_active_{cell_id}.csv',
+           cell_id=config['cells']
+    ),
+
+rule merge_soma_only_1scale_active:
+  output: 
+    'workflows/python_conductance/data_slp/APC_soma_only_1scale_active_{cell_id}-cond_scale_fct{cond_scale_fct}.csv'
+  input: 
+    expand(
+        'workflows/python_conductance/data_slp/soma_only_1scale_active_data/{{cell_id}}/APC_for_slp_{x_coord}_{y_coord}-norm_power_{norm_power}-cond_scale_fct{{cond_scale_fct}}.csv',
+        x_coord=xys,
+        y_coord=xys,
+        norm_power=config['norm_power']
+    )
+  script: 
+    'scripts/merge_data.py'
+
+rule simulate_soma_only_1scale_active:
+  output: 
+    'workflows/python_conductance/data_slp/soma_only_1scale_active_data/{cell_id}/APC_for_slp_{x_coord}_{y_coord}-norm_power_{norm_power}-cond_scale_fct{cond_scale_factor}.csv'
+  input:
+    'workflows/python_conductance/data/soma_only_1scale_active_scale/{cell_id}_scale.npy',
+    'workflows/python_conductance/data_slp/cond_data/{cell_id}/comp_conds_slp_{x_coord}_{y_coord}-norm_power_{norm_power}.npy',
+    'workflows/python_conductance/data_slp/cond_data/{cell_id}/temp_protocol__slp_{x_coord}_{y_coord}-norm_power_{norm_power}.pickle'
+  script: 
+    'scripts/simulate_only_1scale_soma.py'
+
+rule merge_soma_only_active:
+  output: 
+    'workflows/python_conductance/data_slp/APC_soma_only_active_{cell_id}-cond_scale_fct{cond_scale_fct}.csv',
+  input: 
+    expand(
+        'workflows/python_conductance/data_slp/soma_only_active_data/{{cell_id}}/APC_for_slp_{x_coord}_{y_coord}-norm_power_{norm_power}-cond_scale_fct{{cond_scale_fct}}.csv',
+        x_coord=xys,
+        y_coord=xys,
+        norm_power=config['norm_power']
+    )
+  script: 
+    'scripts/merge_data.py'
+
+rule simulate_soma_only_active:
+  output: 
+    'workflows/python_conductance/data_slp/soma_only_active_data/{cell_id}/APC_for_slp_{x_coord}_{y_coord}-norm_power_{norm_power}-cond_scale_fct{cond_scale_factor}.csv'
+  input: 
+    'workflows/python_conductance/data_slp/cond_data/{cell_id}/comp_conds_slp_{x_coord}_{y_coord}-norm_power_{norm_power}.npy',
+    'workflows/python_conductance/data_slp/cond_data/{cell_id}/temp_protocol__slp_{x_coord}_{y_coord}-norm_power_{norm_power}.pickle'
+  script: 
+    'scripts/simulate_only_soma.py'
+
+rule merge_effsum_active:
+  output: 
+    'workflows/python_conductance/data_slp/APC_effsum_active_{cell_id}.csv',
+  input: 
+    expand(
+	'workflows/python_conductance/data_slp/effsum_active_data/{{cell_id}}/APC_for_slp_{x_coord}_{y_coord}-norm_power_{norm_power}-cond_scale_fct{cond_scale_fct}.csv',
+        x_coord=xys,
+        y_coord=xys,
+        norm_power=config['norm_power'],
+        cond_scale_fct=config['cond_scl_fct']
+    )
+  script: 
+    'scripts/merge_data.py'
+
+rule merge_full_active:
+  output: 
+    'workflows/python_conductance/data_slp/APC_full_active_{cell_id}.csv'
+  input: 
+    expand(
+        'workflows/python_conductance/data_slp/full_active_data/{{cell_id}}/APC_for_slp_{x_coord}_{y_coord}-norm_power_{norm_power}.csv',
+        x_coord=xys,
+        y_coord=xys,
+        norm_power=config['norm_power']
+    )
+  script: 
+    'scripts/merge_data.py'
+
+rule simulate_effsum_active:
+  output: 
+    'workflows/python_conductance/data_slp/effsum_active_data/{cell_id}/APC_for_slp_{x_coord}_{y_coord}-norm_power_{norm_power}-cond_scale_fct{cond_scale_fct}.csv'
+  input: 
+    'workflows/python_conductance/data_slp/cond_data/{cell_id}/slp_{x_coord}_{y_coord}-norm_power_{norm_power}.npy',
+    'workflows/python_conductance/data_slp/cond_data/{cell_id}/temp_protocol__slp_{x_coord}_{y_coord}-norm_power_{norm_power}.pickle'
+  script: 
+    'scripts/simulate_effsum_active.py'
+
+rule calculate_effsum_conductance:
+  output:
+    'workflows/python_conductance/data_slp/cond_data/{cell_id}/slp_{x_coord}_{y_coord}-norm_power_{norm_power}.npy',
+    'workflows/python_conductance/data_slp/cond_data/{cell_id}/temp_protocol__slp_{x_coord}_{y_coord}-norm_power_{norm_power}.pickle',
+    'workflows/python_conductance/data_slp/cond_data/{cell_id}/comp_conds_slp_{x_coord}_{y_coord}-norm_power_{norm_power}.npy'
+  input:
+    'workflows/python_conductance/data/light_patterns/slp__x{x_coord}__y{y_coord}.csv',
+    'workflows/python_conductance/data/comp_impedances/{cell_id}.npy'
+  script:
+    'scripts/calculate_effsum_conductance.py'
+
+rule simulate_full_active:
+  output: 
+    'workflows/python_conductance/data_slp/full_active_data/{cell_id}/APC_for_slp_{x_coord}_{y_coord}-norm_power_{norm_power}.csv'
+  input: 
+    'workflows/python_conductance/data/light_patterns/slp__x{x_coord}__y{y_coord}.csv'
+  script: 
+    'scripts/simulate_full_active.py'
+
+rule calc_impedances:
+  output:
+    'workflows/python_conductance/data/comp_impedances/{cell_id}.npy'
+  script:
+    'scripts/calc_impedances.py'
+
+rule gen_single_light_patterns:
+  output: 
+    'workflows/python_conductance/data/light_patterns/slp__x{x_coord}__y{y_coord}.csv'
+  params:
+    diameter_um=config['slp_diameter_um'],
+    NA=config['slp_NA']
+  script:
+    'workflows/python_conductance/scripts/gen_single_light_patterns.py'
