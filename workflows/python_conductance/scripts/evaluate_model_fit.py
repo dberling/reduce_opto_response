@@ -59,10 +59,13 @@ def eval_model_performance(df_full, df_effsum, mode='until_full_max'):
                     APC_dev_rel_to_full.append(abs(APC_full-APC_effsum) / norm_APC)
     return [np.mean(APC_deviation), np.mean(APC_dev_rel_to_full), np.sqrt(np.mean(np.array(APC_deviation)**2)), np.sqrt(np.mean(np.array(APC_dev_rel_to_full)**2))]
 
-df_full = pd.concat([pd.read_csv(fname[0], index_col=0) for fname in list(snakemake.input)])
+files = list(snakemake.input)
+full_model_files = [fname for fname in files if 'full_active_data' in fname]
+effsum_model_files = [fname for fname in files if 'effsum_active_data' in fname]
+df_full = pd.concat([pd.read_csv(fname, index_col=0) for fname in full_model_files])
 df_full = df_full.sort_values(
     by=['lp_config', 'patt_id', 'norm_power_mW_of_MultiStimulator']) 
-df_effsum = pd.concat([pd.read_csv(fname[1], index_col=0) for fname in list(snakemake.input)])
+df_effsum = pd.concat([pd.read_csv(fname, index_col=0) for fname in effsum_model_files])
 df_effsum = df_effsum.sort_values(
     by=['lp_config', 'patt_id', 'norm_power_mW_of_MultiStimulator']) 
 
@@ -73,7 +76,7 @@ for label, result in zip(
     eval_model_performance(df_full, df_effsum, mode=mode)
 ):
     adict[label] = result
-pd.DataFrame(adict).to_csv(str(snakemake.output[0]))
+pd.DataFrame([adict]).to_csv(str(snakemake.output[0]))
 
 mode = 'exclude_effsum_dpb'
 adict = dict()
@@ -82,9 +85,9 @@ for label, result in zip(
     eval_model_performance(df_full, df_effsum, mode=mode)
 ):
     adict[label] = result
-pd.DataFrame(adict).to_csv(str(snakemake.output[1]))
+pd.DataFrame([adict]).to_csv(str(snakemake.output[1]))
 
-for df, label, output in zip([df_full, df_effsum], [str(snakemake.output[2]), str(snakemake.output[3])]):
+for df, output in zip([df_full, df_effsum], [str(snakemake.output[2]), str(snakemake.output[3])]):
     np.save(
         output, 
         np.array(

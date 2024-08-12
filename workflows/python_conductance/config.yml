@@ -1,5 +1,8 @@
 cells: [
   'L23_PC_cADpyr229_1_passdends',
+  'L23_PC_cADpyr229_3_passdends',
+  'L4_PC_cADpyr230_1_passdends',
+  'L4_SS_cADpyr230_1_passdends'
 ]
 # controls light power of MultiStimulator in mW
 norm_power: [
@@ -34,4 +37,4 @@ norm_power: [
 ]
 lp_config: ['config0', 'config1', 'config2']
 pattern_iterations: 100
-cond_scl_fct: [0.3, 0.4]
+cond_scl_fct: [0.3]

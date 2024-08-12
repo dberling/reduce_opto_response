@@ -2,48 +2,96 @@ import numpy as np
 
 rule all:
   input: 
+    expand('workflows/python_conductance/data/APC_soma_only_1scale_active_{cell_id}-cond_scale_fct{cond_scale_fct}.csv',
+           cell_id=config['cells'],
+           cond_scale_fct=[0.05]
+    ),
+    expand('workflows/python_conductance/data/APC_soma_only_active_{cell_id}-cond_scale_fct{cond_scale_fct}.csv',
+           cell_id=config['cells'],
+           cond_scale_fct=[0.3]
+    ),
+    #expand('workflows/python_conductance/data/APC_approx_effsum_active_{cell_id}-cond_scale_fct{cond_scale_factor}.csv',
+    #       cell_id=config['cells'],
+    #       cond_scale_factor=[0.3]
+    #),
     expand('workflows/python_conductance/data/APC_effsum_active_{cell_id}.csv',
            cell_id=config['cells']
     ),
     expand('workflows/python_conductance/data/APC_full_active_{cell_id}.csv',
            cell_id=config['cells']
     ),
-    #expand(
-    #    'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_until_full_max.csv',
-    #    cell_id=config['cells'],
-    #    cond_scale_factor=config['cond_scl_fct']
+    expand(
+        'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_until_full_max.csv',
+        cell_id=config['cells'],
+        cond_scale_factor=config['cond_scl_fct']
+    ),
+    expand(
+        'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_exclude_effsum_dpb.csv',
+        cell_id=config['cells'],
+        cond_scale_factor=config['cond_scl_fct']
+    ),
+    expand(
+        'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_norm_pwr_at_max_full.npy',
+        cell_id=config['cells'],
+        cond_scale_factor=config['cond_scl_fct']
+    ),
+    expand(
+        'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_norm_pwr_at_max_effsum.npy',
+        cell_id=config['cells'],
+        cond_scale_factor=config['cond_scl_fct']
+    ),
+    #expand('workflows/python_conductance/data/reduced_comp_reg_model/{cell_id}_model.pickle',
+    #       cell_id=config['cells']
     #),
-    #expand(
-    #    'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_exclude_effsum_dpb.csv',
-    #    cell_id=config['cells'],
-    #    cond_scale_factor=config['cond_scl_fct']
+    #expand('workflows/python_conductance/data/reduced_comp_reg_model/{cell_id}_fiterror.png',
+    #       cell_id=config['cells']
     #),
-    #expand(
-    #    'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_norm_pwr_at_max_full.csv',
-    #    cell_id=config['cells'],
-    #    cond_scale_factor=config['cond_scl_fct']
-    #),
-    #expand(
-    #    'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_norm_pwr_at_max_effsum.csv',
-    #    cell_id=config['cells'],
-    #    cond_scale_factor=config['cond_scl_fct']
+    #expand('workflows/python_conductance/data/reduced_comp_reg_model/{cell_id}_top_compartments.npy',
+    #       cell_id=config['cells']
     #)
-    expand('workflows/python_conductance/data/reduced_comp_reg_model/{cell_id}_model.pickle',
-           cell_id=config['cells']
-    ),
-    expand('workflows/python_conductance/data/reduced_comp_reg_model/{cell_id}_fiterror.png',
-           cell_id=config['cells']
-    ),
-    expand('workflows/python_conductance/data/reduced_comp_reg_model/{cell_id}_top_compartments.npy',
-           cell_id=config['cells']
+
+rule merge_soma_only_1scale_active:
+  output: 
+    'workflows/python_conductance/data/APC_soma_only_1scale_active_{cell_id}-cond_scale_fct{cond_scale_fct}.csv'
+  input: 
+    expand(
+        'workflows/python_conductance/data/soma_only_1scale_active_data/{{cell_id}}/APC_for_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}-cond_scale_fct{{cond_scale_fct}}.csv',
+        lp_config=config['lp_config'],
+        patt_id=np.arange(config['pattern_iterations']),
+        norm_power=config['norm_power']
     )
+  script: 
+    'scripts/merge_data.py'
+
+rule simulate_soma_only_1scale_active:
+  output: 
+    'workflows/python_conductance/data/soma_only_1scale_active_data/{cell_id}/APC_for_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}-cond_scale_fct{cond_scale_factor}.csv'
+  input:
+    'workflows/python_conductance/data/soma_only_1scale_active_scale/{cell_id}_scale.npy',
+    'workflows/python_conductance/data/cond_data/{cell_id}/comp_conds_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}.npy',
+    'workflows/python_conductance/data/cond_data/{cell_id}/temp_protocol__lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}.pickle'
+  script: 
+    'scripts/simulate_only_1scale_soma.py'
+
+rule find_scale_for_soma_only_1scale_active:
+  output:
+    'workflows/python_conductance/data/soma_only_1scale_active_scale/{cell_id}_scale.npy'
+  input: 
+    expand(
+      'workflows/python_conductance/data/cond_data/{{cell_id}}/comp_conds_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}.npy',
+        lp_config=config['lp_config'],
+        patt_id=np.arange(config['pattern_iterations']),
+        norm_power=config['norm_power']
+    )
+  script:
+    'scripts/find_scale_for_soma_only_1scale_active.py'
 
 rule merge_soma_only_active:
   output: 
-    'workflows/python_conductance/data/APC_soma_only_active_{cell_id}.csv',
+    'workflows/python_conductance/data/APC_soma_only_active_{cell_id}-cond_scale_fct{cond_scale_fct}.csv',
   input: 
     expand(
-        'workflows/python_conductance/data/soma_only_active_data/{{cell_id}}/APC_for_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}.csv',
+        'workflows/python_conductance/data/soma_only_active_data/{{cell_id}}/APC_for_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}-cond_scale_fct{{cond_scale_fct}}.csv',
         lp_config=config['lp_config'],
         patt_id=np.arange(config['pattern_iterations']),
         norm_power=config['norm_power']
@@ -53,12 +101,36 @@ rule merge_soma_only_active:
 
 rule simulate_soma_only_active:
   output: 
-    'workflows/python_conductance/data/soma_only_active_data/{cell_id}/APC_for_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}.csv'
+    'workflows/python_conductance/data/soma_only_active_data/{cell_id}/APC_for_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}-cond_scale_fct{cond_scale_factor}.csv'
   input: 
-    'workflows/python_conductance/data/cond_data/{cell_id}/lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}.npy',
+    'workflows/python_conductance/data/cond_data/{cell_id}/comp_conds_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}.npy',
     'workflows/python_conductance/data/cond_data/{cell_id}/temp_protocol__lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}.pickle'
   script: 
-    'workflows/python_conductance/scripts/simulate_only_soma.py'
+    'scripts/simulate_only_soma.py'
+
+rule merge_approx_effsum_active:
+  output: 
+    'workflows/python_conductance/data/APC_approx_effsum_active_{cell_id}-cond_scale_fct{cond_scale_factor}.csv',
+  input: 
+    expand(
+	'workflows/python_conductance/data/approx_effsum_active_data/{{cell_id}}/APC_for_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}-cond_scale_fct{{cond_scale_factor}}.csv',
+        lp_config=config['lp_config'],
+        patt_id=np.arange(config['pattern_iterations']),
+        norm_power=config['norm_power']
+    )
+  script: 
+    'scripts/merge_data.py'
+
+rule simulate_approx_effsum_active:
+  output: 
+    'workflows/python_conductance/data/approx_effsum_active_data/{cell_id}/APC_for_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}-cond_scale_fct{cond_scale_fct}.csv'
+  input: 
+    'workflows/python_conductance/data/reduced_comp_reg_model/{cell_id}_top_compartments.npy',
+    'workflows/python_conductance/data/comp_impedances/{cell_id}.npy',
+    'workflows/python_conductance/data/cond_data/{cell_id}/comp_conds_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}.npy',
+    'workflows/python_conductance/data/reduced_comp_reg_model/{cell_id}_model.pickle'
+  script: 
+    'scripts/simulate_approx_effsum_active.py'
 
 rule fit_reduced_compartment_weights:
   output:
@@ -108,16 +180,20 @@ rule evaluate_cond_scale_factor_model_performance:
   output:
     'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_until_full_max.csv',
     'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_exclude_effsum_dpb.csv',
-    'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_norm_pwr_at_max_full.csv',
-    'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_norm_pwr_at_max_effsum.csv'
+    'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_norm_pwr_at_max_full.npy',
+    'workflows/python_conductance/data/cond_scale_factor_performance/{cell_id}/fct_{cond_scale_factor}_norm_pwr_at_max_effsum.npy'
   input:
-    expand([
-        'workflows/python_conductance/data/full_active_data/{{cell_id}}/APC_for_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}.csv',
-	'workflows/python_conductance/data/effsum_active_data/{{cell_id}}/APC_for_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}-cond_scale_fct{{cond_scale_factor}}.csv'
-        ],
-        lp_config=config['lp_config'],
-        patt_id=np.arange(config['pattern_iterations']),
-        norm_power=config['norm_power']
+    expand(
+      'workflows/python_conductance/data/full_active_data/{{cell_id}}/APC_for_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}.csv',
+      lp_config=config['lp_config'],
+      patt_id=np.arange(config['pattern_iterations']),
+      norm_power=config['norm_power']
+    ),
+    expand(
+      'workflows/python_conductance/data/effsum_active_data/{{cell_id}}/APC_for_lp_{lp_config}-id_{patt_id}-norm_power_{norm_power}-cond_scale_fct{{cond_scale_factor}}.csv',
+      lp_config=config['lp_config'],
+      patt_id=np.arange(config['pattern_iterations']),
+      norm_power=config['norm_power']
     )
   script: 
     'scripts/evaluate_model_fit.py'

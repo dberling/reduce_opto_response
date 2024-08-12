@@ -8,7 +8,6 @@ import ast
 import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
 
-
 # set up neuron model
 passive_cell_name = str(snakemake.wildcards.cell_id)
 active_cell_name = passive_cell_name[:-10]
@@ -28,18 +27,25 @@ rec_vars = [[],[]]
 
 APCs = []
 # define/load driving stimulus
-with open(str(snakemake.input[1]), 'rb') as handle:
-    temp_protocol = pickle.load(handle)
-time_ms = np.arange(0,temp_protocol['total_rec_time_ms'],1) # conductance is saves at 1ms resolution
-# conductance across compartments:
-conds = np.load(str(snakemake.input[0]))
-cond_soma = conds[:,0] # only soma
-cond_sum = conds.sum(axis=1) # sum across compartments
-scale = cond_sum.sum() / cond_soma.sum()
-# scaled conductance to be injected:
-conductance_nS = cond_soma * scale
-# scale with cond-scale-factor
-conductance_nS *= float(snakemake.wildcards.cond_scale_factor)
+
+# most relevant comps
+top_comps = np.load(str(snakemake.input[0]), allow_pickle=True)
+# comp_names
+comp_data = np.array(['_'.join([str(int(secname)), str(x)]) for secname, x in np.load(str(snakemake.input[1]))[:,0:2]])
+# load calculated conductance in all comps
+conds = np.load(str(snakemake.input[2]))
+# filter out relevant compartments
+top_comp_idxs = np.where(np.in1d(comp_data, top_comps))[0]
+top_comp_conds = conds[:,top_comp_idxs]
+
+# load prediction model
+with open(str(snakemake.input[3]), 'rb') as file: 
+    # Call load method to deserialze 
+    model = pickle.load(file) 
+# predict effective summed conductance based on conductance in relevant compartments
+conductance_nS = model.predict(top_comp_conds)
+# times are in 1ms resolution:
+time_ms = np.arange(0,250)
 
 if (conductance_nS.shape == ()) and np.isnan(conductance_nS) == True:
     # calculation of conductance was rejected. Save dummy file.
@@ -47,6 +53,7 @@ if (conductance_nS.shape == ()) and np.isnan(conductance_nS) == True:
         dict(
             lp_config = str(snakemake.wildcards.lp_config),
             patt_id = int(snakemake.wildcards.patt_id),
+            cond_scale_factor = float(snakemake.wildcards.cond_scale_fct),
             norm_power_mW_of_MultiStimulator = float(snakemake.wildcards.norm_power),
             APC=np.nan
         )
@@ -54,6 +61,8 @@ if (conductance_nS.shape == ()) and np.isnan(conductance_nS) == True:
     pd.DataFrame(APCs).to_csv(str(snakemake.output))
 else:
     # proceed with simulation
+    # scale conductance according to general scale factor
+    conductance_nS *= float(snakemake.wildcards.cond_scale_fct)
 
     # driving stimulus
     t = h.Vector(time_ms)
@@ -71,7 +80,6 @@ else:
     # you know what you're doing, you probably want to pass True there
     y.play(soma(0.5)._ref_gcat2_g_chanrhod, t, True)
 
-    # h.v_init, h.tstop= -70, temp_protocol['total_rec_time_ms']
     h.v_init, h.tstop= -70, 201
     h.run()
 
@@ -84,6 +92,7 @@ else:
         dict(
             lp_config = str(snakemake.wildcards.lp_config),
             patt_id = int(snakemake.wildcards.patt_id),
+            cond_scale_factor = float(snakemake.wildcards.cond_scale_fct),
             norm_power_mW_of_MultiStimulator = float(snakemake.wildcards.norm_power),
             APC=APC
         )

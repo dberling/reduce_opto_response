@@ -28,14 +28,13 @@ rec_vars = [[],[]]
 
 APCs = []
 # define/load driving stimulus
-with open(str(snakemake.input[1]), 'rb') as handle:
+with open(str(snakemake.input[2]), 'rb') as handle:
     temp_protocol = pickle.load(handle)
 time_ms = np.arange(0,temp_protocol['total_rec_time_ms'],1) # conductance is saves at 1ms resolution
 # conductance across compartments:
-conds = np.load(str(snakemake.input[0]))
+conds = np.load(str(snakemake.input[1]))
 cond_soma = conds[:,0] # only soma
-cond_sum = conds.sum(axis=1) # sum across compartments
-scale = cond_sum.sum() / cond_soma.sum()
+scale = np.load(str(snakemake.input[0]))
 # scaled conductance to be injected:
 conductance_nS = cond_soma * scale
 # scale with cond-scale-factor
