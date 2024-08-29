@@ -1,0 +1,40 @@
+import numpy as np
+xys = np.arange(0, config['xy_max'], config['dxy'])
+
+rule all:
+  input: 
+    expand('workflows/python_conductance/data_slp/APC_full_active_{cell_id}.csv',
+           cell_id=config['cells']
+    )
+
+
+rule merge_full_active:
+  output: 
+    'workflows/python_conductance/data_slp/APC_full_active_{cell_id}.csv'
+  input: 
+    expand(
+        'workflows/python_conductance/data_slp/full_active_data/{{cell_id}}/APC_for_slp_{x_coord}_{y_coord}-norm_power_{norm_power}.csv',
+        x_coord=xys,
+        y_coord=xys,
+        norm_power=config['norm_power']
+    )
+  script: 
+    'scripts/merge_data.py'
+
+
+rule simulate_full_active:
+  output: 
+    'workflows/python_conductance/data_slp/full_active_data/{cell_id}/APC_for_slp_{x_coord}_{y_coord}-norm_power_{norm_power}.csv'
+  input: 
+    'workflows/python_conductance/data/light_patterns/slp__x{x_coord}__y{y_coord}.csv'
+  script: 
+    'scripts/simulate_full_active.py'
+
+rule gen_single_light_patterns:
+  output: 
+    'workflows/python_conductance/data/light_patterns/slp__x{x_coord}__y{y_coord}.csv'
+  params:
+    diameter_um=config['slp_diameter_um'],
+    NA=config['slp_NA']
+  script:
+    'scripts/gen_single_light_patterns.py'
