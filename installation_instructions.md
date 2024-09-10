@@ -63,6 +63,8 @@ Choose from files for ChR-2 and ChrimsonR:
 * ChR-2: neatmodels install -p NEAST_models/BBP/bbpchannels.py --neuronresource simneurostim/model/mod/optostimmods/
 * ChrimsonR: neatmodels install -p NEAST_models/BBP/bbpchannels.py --neuronresource simneurostim/model/mod/optostimmods_chrimson/
 
+IMPORTANT: Delete previously compiled .mod-files by removing the directory x86_64 (linux/MAC)
+
 # Execute workflow
 
 Run submit_snake.sh
