@@ -1,0 +1,24 @@
+cells: [
+  'L23_PC_cADpyr229_3_passdends'
+]
+# controls light power of MultiStimulator in mW
+norm_power: [
+  0.0001,
+  0.0004,
+  0.0016,
+  0.0064,
+  0.0256,
+  0.1024,
+  0.4096,
+]
+cond_scl_fct: [0.3]
+
+soma_1scale_cond_scl_fct: [15]
+
+# light source setup:
+slp_diameter_um : 25
+slp_NA : 0.1
+
+# space scanned with light source
+xy_max : 250
+dxy : 25
