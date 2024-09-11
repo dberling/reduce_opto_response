@@ -57,7 +57,8 @@ data = []
 soma_loc = allsegment_locs[0]
 for loc,coords in zip(allsegment_locs, allsegment_coords_area):
     # input resistance:
-    ir = greens_tree.calcZF(loc, soma_loc)[ft.ind_0s].real
-    data.append([loc['node'], loc['x'], ir, *coords])
+    ir = greens_tree.calcZF(loc, loc)[ft.ind_0s].real
+    tr = greens_tree.calcZF(loc, soma_loc)[ft.ind_0s].real
+    data.append([loc['node'], loc['x'], ir, tr, *coords])
 
 np.save(str(snakemake.output), data)
