@@ -37,7 +37,6 @@ if (conductance_nS.shape == ()) and np.isnan(conductance_nS) == True:
     # calculation of conductance was rejected. Save dummy file.
     APCs.append(
         dict(
-            lp_config = str(snakemake.wildcards.lp_config),
             patt_id = int(snakemake.wildcards.patt_id),
             cond_scale_factor = float(snakemake.wildcards.cond_scale_fct),
             norm_power_mW_of_MultiStimulator = float(snakemake.wildcards.norm_power),
@@ -77,7 +76,6 @@ else:
     APC = len(peaks)
     APCs.append(
         dict(
-            lp_config = str(snakemake.wildcards.lp_config),
             patt_id = int(snakemake.wildcards.patt_id),
             cond_scale_factor = float(snakemake.wildcards.cond_scale_fct),
             norm_power_mW_of_MultiStimulator = float(snakemake.wildcards.norm_power),
