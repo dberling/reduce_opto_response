@@ -31,4 +31,4 @@ slp_NA : 0.1
 xy_max : 250
 dxy : 25
 
-imp_diff: ['dd_ds', 'dd_ss', 'dd_mean(ds,ss)']
+imp_diff: ['ds', 'ss', 'mean']
