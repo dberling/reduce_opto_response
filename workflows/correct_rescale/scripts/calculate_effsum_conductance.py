@@ -10,7 +10,7 @@ temp_protocol = dict(
     total_rec_time_ms=250
 )
 # rescaled cond using impedance in GOhm
-rescaled_comp_cond_nS, scaled_rescaled_cond_nS, interpol_dt_ms, completed = calc_rescaled_comp_conductances_nS(
+rescaled_comp_cond_nS, interpol_dt_ms, completed = calc_rescaled_comp_conductances_nS(
     norm_power_mW_of_MultiStimulator=float(snakemake.wildcards.norm_power),
     stimulator_config = pd.read_csv(
         str(snakemake.input[0]),
@@ -18,7 +18,7 @@ rescaled_comp_cond_nS, scaled_rescaled_cond_nS, interpol_dt_ms, completed = calc
     ).to_dict(orient='records'),
     comp_data=np.load(str(snakemake.input[1])),
     temp_protocol = temp_protocol,
-    scale_imp = 0.1,
+    imp_diff = str(snakemake.wildcards.imp_diff),
     reject_if_sampling_smaller=0.001
 ) 
 temp_protocol['interpol_dt_ms'] = interpol_dt_ms
