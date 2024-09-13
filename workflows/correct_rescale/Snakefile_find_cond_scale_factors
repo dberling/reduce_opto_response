@@ -5,20 +5,27 @@ ys = [0]
 patt_ids = [0]
 
 rule all:
+  input:
+    expand('workflows/correct_rescale/fr_center/out_{cell_id}.png',
+           cell_id=config['cells']
+    )
+
+rule plot:
   input: 
-    expand('workflows/correct_rescale/fr_center/APC_soma_only_1scale_active_{cell_id}-cond_scale_fct{cond_scale_fct}-imp_diff___{imp_diff}.csv',
-           cell_id=config['cells'],
-           cond_scale_fct=config['soma_1scale_cond_scl_fct'],
-           imp_diff = [config['imp_diff'][0]]
-    ),
-    expand('workflows/correct_rescale/fr_center/APC_effsum_active_{cell_id}-cond_scale_fct{cond_scale_fct}-imp_diff___{imp_diff}.csv',
-           cell_id=config['cells'],
+    #expand('workflows/correct_rescale/fr_center/APC_soma_only_1scale_active_{{cell_id}}-cond_scale_fct{cond_scale_fct}-imp_diff___{imp_diff}.csv',
+    #       cond_scale_fct=config['soma_1scale_cond_scl_fct'],
+    #       imp_diff = [config['imp_diff'][0]]
+    #),
+    expand('workflows/correct_rescale/fr_center/APC_effsum_active_{{cell_id}}-cond_scale_fct{cond_scale_fct}-imp_diff___{imp_diff}.csv',
            cond_scale_fct=config['cond_scl_fct'],
            imp_diff=config['imp_diff'],
     ),
-    expand('workflows/correct_rescale/fr_center/APC_full_active_{cell_id}.csv',
-           cell_id=config['cells']
-    ),
+    'workflows/correct_rescale/fr_center/APC_full_active_{cell_id}.csv'
+
+  output:
+    'workflows/correct_rescale/fr_center/out_{cell_id}.png'
+  script:
+    'scripts/plot_cond_scale_results.py'
 
 rule merge_soma_only_1scale_active:
   output: 

@@ -1,12 +1,12 @@
 cells: [
-  #'L23_PC_cADpyr229_1_passdends',
-  #'L23_PC_cADpyr229_2_passdends',
+  'L23_PC_cADpyr229_1_passdends',
+  'L23_PC_cADpyr229_2_passdends',
   'L23_PC_cADpyr229_3_passdends',
-  #  'L23_PC_cADpyr229_4_passdends',
-  #  'L4_PC_cADpyr230_1.py',
-  #  'L4_PC_cADpyr230_2.py',
-  #  'L4_PC_cADpyr230_3.py',
-  #  'L4_PC_cADpyr230_4.py',
+  'L23_PC_cADpyr229_4_passdends',
+  'L4_PC_cADpyr230_1_passdends.py',
+  'L4_PC_cADpyr230_2_passdends.py',
+  'L4_PC_cADpyr230_3_passdends.py',
+  'L4_PC_cADpyr230_4_passdends.py',
 
 ]
 # controls light power of MultiStimulator in mW
@@ -19,7 +19,7 @@ norm_power: [
   0.1024,
   0.4096,
 ]
-cond_scl_fct: [0.15, 0.2]
+cond_scl_fct: [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5]
 
 soma_1scale_cond_scl_fct: [0.75]
 
