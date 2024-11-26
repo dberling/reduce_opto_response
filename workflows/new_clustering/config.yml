@@ -1,0 +1,39 @@
+cells: [
+  'L23_PC_cADpyr229_1_passdends',
+  #'L23_PC_cADpyr229_2_passdends',
+  #'L23_PC_cADpyr229_3_passdends',
+  #'L23_PC_cADpyr229_4_passdends',
+  #  'L4_PC_cADpyr230_1.py',
+  #  'L4_PC_cADpyr230_2.py',
+  #  'L4_PC_cADpyr230_3.py',
+  #  'L4_PC_cADpyr230_4.py',
+
+]
+# controls light power of MultiStimulator in mW
+norm_power: [
+  0.000025,
+  0.0001,
+  0.0004,
+  0.0016,
+  #0.0064,
+  #0.0128,
+  #0.0256,
+  #0.0512,
+  #0.1024,
+  #0.2048,
+  #0.4096,
+]
+cond_scl_fct: [0.15]
+
+soma_1scale_cond_scl_fct: [1.]
+
+# light source setup:
+slp_diameter_um : 50
+slp_NA : 0.1
+
+# space scanned with light source
+xy_max : 110
+dxy : 10
+
+# cluster grid width
+cluster_grid_width : 30
