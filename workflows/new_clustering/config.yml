@@ -11,10 +11,16 @@ cells: [
 ]
 # controls light power of MultiStimulator in mW
 norm_power: [
-  0.000025,
+  0.00005,
   0.0001,
+  #0.00015,
+  0.0002,
+  #0.0003,
   0.0004,
-  0.0016,
+  #0.0005,
+  #0.0006,
+  #0.0008,
+  #0.0016,
   #0.0064,
   #0.0128,
   #0.0256,
@@ -36,4 +42,4 @@ xy_max : 110
 dxy : 10
 
 # cluster grid width
-cluster_grid_width : 30
+cluster_grid_width : [50]
