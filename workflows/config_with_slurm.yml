@@ -1,6 +1,0 @@
-executor: slurm
-jobs: 31
-latency-wait: 30
-
-cellsfile: 'workflows/cell_lists/L23_L5_PC_cells.csv'
-
