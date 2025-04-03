@@ -42,7 +42,7 @@ need to fork and add my implementation of neatmodel
 
 git checkout nestml-channel-generation
 
-pip install ./neat
+pip install ./NEAT-2
 
 ## neurostim package:
 
