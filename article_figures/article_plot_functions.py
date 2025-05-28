@@ -5,7 +5,7 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from matplotlib.colors import LinearSegmentedColormap
 import matplotlib.patches as patches
 
-def label_subplots_ABC(fig, axs, x_shift, y_shift, **text_kws):
+def label_subplots_ABC(fig, axs, x_shift, y_shift, label_shift=0, **text_kws):
     labels = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
     if type(x_shift) != list():
         x_shift = [x_shift] * len(axs)
@@ -16,7 +16,7 @@ def label_subplots_ABC(fig, axs, x_shift, y_shift, **text_kws):
         pos = ax.get_position()  # returns (left, bottom, width, height)
         
         # Annotate at the upper-left corner of each subplot
-        fig.text(pos.x0 + x_shift[i], pos.y1 + y_shift[i], labels[i], **text_kws)
+        fig.text(pos.x0 + x_shift[i], pos.y1 + y_shift[i], labels[i+label_shift], **text_kws)
 
 def get_map_patt_id_to_x_y(xy_max, dxy):
     xys = np.arange(-1*xy_max, xy_max, dxy)
