@@ -4,6 +4,7 @@ import pandas as pd
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from matplotlib.colors import LinearSegmentedColormap
 import matplotlib.patches as patches
+import matplotlib.cm as cm
 
 def label_subplots_ABC(fig, axs, x_shift, y_shift, label_shift=0, **text_kws):
     labels = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
@@ -90,9 +91,13 @@ def spatial_activation_plot(ax, df, APCmax, cell_topview_simtree, morph_lw, shif
     )
     return ax, mappable
 
-def spatial_activation_diff_plot(ax, df_full, df_reduced, APCmin, APCmax, cell_topview_simtree, morph_lw, sb_draw=1, sb_width=2, label_fiber=False):
+def spatial_activation_diff_plot(ax, df_full, df_reduced, APCmin, APCmax, cell_topview_simtree, morph_lw, sb_draw=1, sb_width=2, label_fiber=False, relative=False):
     df = df_reduced[['x','y','APC']].merge(df_full[['x','y','APC']], on=['x','y'])
-    df['APC'] = (df.APC_x - df.APC_y) / df.APC_y
+    if relative:
+        df['APC'] = (df.APC_x - df.APC_y) / df.APC_y
+    else:
+        df['APC'] = (df.APC_x - df.APC_y)
+        df.loc[df.APC == 0]['APC'] = np.nan
     
     print("APCmax: ",df.APC.max())
     print("APCmin: ",df.APC.min())
@@ -140,19 +145,22 @@ def spatial_activation_diff_plot(ax, df_full, df_reduced, APCmin, APCmax, cell_t
     return ax, mappable
 
     
-def plot_morphology_with_light(ax, simtree, marklocs, locargs, morph_lw, light_prof_xx_zz_I, inset=False, inset_data=None, sb_width=5.0, sb_draw=True, cax=None, cbar_kws=dict()):
+def plot_morphology_with_light(ax, simtree, marklocs, locargs, morph_lw, light_prof_xx_zz_I, inset=False, inset_data=None, sb_width=5.0, sb_draw=True, cax=None, cbar_kws=dict(), plotargs={'c': 'k', 'alpha':1}, cs=None, cmap=None):
+    if 'lw' not in plotargs.keys():
+        plotargs['lw'] = morph_lw
     custom_cmap = LinearSegmentedColormap.from_list('custom_blues', ['white', 'blue'], N=256)
     # plot light profile
     mappable = ax.pcolormesh(light_prof_xx_zz_I[0],light_prof_xx_zz_I[1],light_prof_xx_zz_I[2], cmap=custom_cmap)
     # plot cell morphology
     simtree.plot2DMorphology(
         ax=ax,
-        plotargs={'c': 'k', 'lw': morph_lw, 'alpha':1},
+        plotargs=plotargs,
         marklocs=marklocs,
         locargs=locargs,
         draw_soma_circle=False,
         sb_width=sb_width,
-        sb_draw=sb_draw
+        sb_draw=sb_draw,
+        cmap=cmap
     )
     if inset:
         # create inset with conductance
