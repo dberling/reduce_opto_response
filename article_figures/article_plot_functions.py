@@ -97,12 +97,16 @@ def spatial_activation_diff_plot(ax, df_full, df_reduced, APCmin, APCmax, cell_t
         df['APC'] = (df.APC_x - df.APC_y) / df.APC_y
     else:
         df['APC'] = (df.APC_x - df.APC_y)
-        df.loc[df.APC == 0]['APC'] = np.nan
+        #df.loc[df.APC == 0]['APC'] = np.nan
     
     print("APCmax: ",df.APC.max())
     print("APCmin: ",df.APC.min())
     # prepare cmap:
-    cmap = 'PuOr'
+    #cmap = 'PuOr'
+    original_cmap = plt.cm.get_cmap('PuOr', 256)
+    colors = original_cmap(np.linspace(0, 1, 256))
+    colors[128] = [1, 1, 1, 1]  # RGBA for white
+    cmap = LinearSegmentedColormap.from_list('PuOr_white_center', colors)
     # plot activation
     ax, mappable = subplot(df, ax, APCmin=APCmin, APCmax=APCmax, cmap=cmap)
     
