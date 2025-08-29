@@ -1,0 +1,14 @@
+name: nestml_pip
+channels:
+  - defaults
+dependencies:
+  - boost-cpp
+  - make
+  - boost
+  - cxx-compiler
+  - ipython
+  - python
+  - cmake
+  - libboost
+  - nest-simulator
+prefix: /home/berling/miniconda3/envs/nestml_pip

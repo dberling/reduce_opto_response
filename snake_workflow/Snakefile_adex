@@ -1,0 +1,86 @@
+import numpy as np
+xys = np.arange(-1*config['xymax'], config['xymax'], config['dxy'])
+xs, ys = [arr.flatten() for arr in np.meshgrid(xys, xys)]
+patt_ids = np.arange(0,len(xs))
+
+rule all:
+  input: 
+    expand('snake_workflow/adex_result--{cell_id}_d{diameter}_NA{NA}.csv', 
+           cell_id=config['cell_ids'],
+           diameter=config['slp_diameter_um'],
+           NA=config['slp_NA']
+    )
+
+rule merge:
+  output:
+    'snake_workflow/adex_result--{cell_id}_d{diameter}_NA{NA}.csv'
+  input:
+    expand(
+      'snake_workflow/simulated_data/APC/RONadex--{{cell_id}}--{cond_scale_fct}--{cluster_grid_width}--{xymax}--{dxy}--{patt_id}--{norm_power}.csv',
+      cond_scale_fct=config['cond_scale_fct'],
+      cluster_grid_width=config['cluster_grid_width'],
+      xymax=config['xymax'],
+      dxy=config['dxy'],
+      patt_id=patt_ids,
+      norm_power=config['norm_power']
+    ),
+  script:
+    'scripts/merge.py'
+
+rule simulate_RON_adex:
+  output: 
+    'snake_workflow/simulated_data/APC/RONadex--{cell_id}--{cond_scale_fct}--{cluster_grid_width}--{xymax}--{dxy}--{patt_id}--{norm_power}.csv',
+  input: 
+    'snake_workflow/simulated_data/RON_cond/{cell_id}/slp-id{patt_id}-xymax_{xymax}-dxy_{dxy}-norm_power_{norm_power}-cluster_{cluster_grid_width}-cond_scale_fct{cond_scale_fct}.npy',
+    'snake_workflow/simulated_data/RON_cond/{cell_id}/temp_protocol__slp-id{patt_id}-xymax_{xymax}-dxy_{dxy}-norm_power_{norm_power}-cluster_{cluster_grid_width}-cond_scale_fct{cond_scale_fct}.pickle',
+    'snake_workflow/adex_models/fit_to_{cell_id}.nestml'
+  script:
+    'scripts/simulate_RON_adex.py'
+
+rule calculate_RON_conductance:
+  output:
+    'snake_workflow/simulated_data/RON_cond/{cell_id}/slp-id{patt_id}-xymax_{xymax}-dxy_{dxy}-norm_power_{norm_power}-cluster_{cluster_grid_width}-cond_scale_fct{cond_scale_fct}.npy',
+    'snake_workflow/simulated_data/RON_cond/{cell_id}/temp_protocol__slp-id{patt_id}-xymax_{xymax}-dxy_{dxy}-norm_power_{norm_power}-cluster_{cluster_grid_width}-cond_scale_fct{cond_scale_fct}.pickle',
+  input:
+    'snake_workflow/simulated_data/RON/{cell_id}-cluster_{cluster_grid_width}-cond_scl_{cond_scale_fct}-_cond_scale.npy',
+    'snake_workflow/simulated_data/RON/{cell_id}-cluster_{cluster_grid_width}-cond_scl_{cond_scale_fct}-_node_data.npy',
+    'snake_workflow/simulated_data/RON/{cell_id}-cluster_{cluster_grid_width}-cond_scl_{cond_scale_fct}-_comp_data.npy',
+    'snake_workflow/simulated_data/light_patterns/slp-id{patt_id}-xymax_{xymax}-dxy_{dxy}.csv',
+    'snake_workflow/simulated_data/RON/{cell_id}-cluster_{cluster_grid_width}-cond_scl_{cond_scale_fct}-soma_location.npy'
+  script:
+    'scripts/calculate_RON_conductance.py'
+
+rule prepare_RON:
+  output:
+    'snake_workflow/simulated_data/RON/{cell_id}-cluster_{cluster_grid_width}-cond_scl_{cond_scale_fct}-_cond_scale.npy',
+    'snake_workflow/simulated_data/RON/{cell_id}-cluster_{cluster_grid_width}-cond_scl_{cond_scale_fct}-_node_data.npy',
+    'snake_workflow/simulated_data/RON/{cell_id}-cluster_{cluster_grid_width}-cond_scl_{cond_scale_fct}-_comp_data.npy'
+  input:
+    'snake_workflow/simulated_data/RON/{cell_id}-cluster_{cluster_grid_width}-cond_scl_{cond_scale_fct}-grouping.pickle'
+  script:
+    'scripts/prepare_RON.py'
+
+rule reduce_RON:
+  output:
+    'snake_workflow/simulated_data/RON/{cell_id}-cluster_{cluster_grid_width}-cond_scl_{cond_scale_fct}-grouping.pickle',
+    'snake_workflow/simulated_data/RON/{cell_id}-cluster_{cluster_grid_width}-cond_scl_{cond_scale_fct}-soma_location.npy'
+  script:
+    'scripts/reduce_RON.py'
+
+rule group_morphology:
+  output:
+    'snake_workflow/simulated_data/grouping/{cell_id}-cluster_{cluster_grid_width}.pickle',
+    'snake_workflow/simulated_data/grouping/{cell_id}-cluster_{cluster_grid_width}.png'
+  script:
+    'scripts/spatially_group_morphology.py'
+
+rule gen_single_light_patterns:
+  output: 
+    'snake_workflow/simulated_data/light_patterns/slp-id{patt_id}-xymax_{xymax}-dxy_{dxy}.csv'
+  params:
+    diameter_um=config['slp_diameter_um'],
+    NA=config['slp_NA'],
+    x=xs,
+    y=ys
+  script:
+    'scripts/gen_single_light_patterns.py'

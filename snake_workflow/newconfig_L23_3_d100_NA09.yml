@@ -1,0 +1,20 @@
+cell_ids: [
+  'L23_PC_cADpyr229_3',
+]
+
+# controls light power of MultiStimulator in mW
+norm_power: [
+  0.002,
+]
+cond_scale_fct: [0.85]
+
+# light source setup:
+slp_diameter_um : 100
+slp_NA : 0.9
+
+# space scanned with light source
+xymax : 300
+dxy : 25
+
+# cluster grid width
+cluster_grid_width : [50]
